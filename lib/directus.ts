@@ -1,66 +1,109 @@
 // lib/directus.ts
 
-import { Directus } from '@directus/sdk';
-import { User } from './directus.types'; // Asume que tienes un archivo para tus tipos
-                                        // Si no lo tienes, define la interfaz User aquí.
+// 1. Exportamos el tipo de usuario (Si tienes un archivo .types, puedes eliminar esta interfaz)
+export interface User {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  role: string;
+  status: 'active' | 'inactive' | 'invited' | 'deleted';
+  last_access?: string;
+  token?: string;
+  avatar?: string;
+  theme?: 'light' | 'dark';
+}
+
+// 2. Importar los módulos correctos: createDirectus y extensiones
+import { createDirectus, rest, authentication, Storage } from '@directus/sdk';
 
 // Configuración:
+// Usamos NEXT_PUBLIC_DIRECTUS_URL para que esté disponible en el cliente (Browser)
 const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'https://rayner-seguros.6vlrrp.easypanel.host';
 
-// 1. Inicializar la instancia de Directus
-// La instancia principal no necesita un token fijo, sino que maneja la sesión del usuario.
-const directus = new Directus<User>(directusUrl, {
-  // Configuración de almacenamiento (cookies o localStorage) para guardar los tokens
-  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-});
+// 3. Implementación de almacenamiento simple (localStorage)
+// Necesitamos un objeto que simule el storage para que el SDK guarde los tokens
+const customStorage: Storage = {
+    get: (key) => {
+        if (typeof window !== 'undefined') {
+            return window.localStorage.getItem(key);
+        }
+        return null;
+    },
+    set: (key, value) => {
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(key, value);
+        }
+    },
+    delete: (key) => {
+        if (typeof window !== 'undefined') {
+            window.localStorage.removeItem(key);
+        }
+    },
+};
+
+// 4. Inicializar la instancia de Directus con el patrón correcto:
+const directus = createDirectus<User>(directusUrl)
+  .with(rest()) // Habilitar peticiones REST
+  .with(authentication('json', { storage: customStorage })); // Habilitar autenticación con storage
 
 /**
- * Función para iniciar sesión usando el SDK.
- * El SDK maneja automáticamente:
- * 1. La llamada a /auth/login.
- * 2. Guardar el access_token y refresh_token en el storage configurado (localStorage).
+ * Iniciar sesión: Llama a /auth/login, guarda los tokens en localStorage.
  */
 export async function login(email: string, password: string) {
   try {
-    // El SDK devuelve el objeto de la sesión
     const result = await directus.auth.login({ email, password });
     
-    // Opcional: Cargar el perfil del usuario después del login
-    const user = await directus.users.me.read();
+    // Leer el perfil del usuario autenticado
+    const user = await directus.users.read('me'); 
     
     return { session: result, user: user };
   } catch (error) {
-    // Manejo de errores específicos del SDK
     console.error('Directus Login Failed:', error);
+    // Re-lanza un error más amigable para la UI
     throw new Error('Login failed. Check credentials or Directus permissions.');
   }
 }
 
 /**
- * Función para obtener el usuario actual.
- * El SDK automáticamente toma el access_token del storage y lo adjunta.
- * También intenta usar el refresh_token si el access_token ha expirado.
+ * Obtener el usuario actual: Usa el token de localStorage. El SDK maneja el refresco.
  */
 export async function getCurrentUser() {
   try {
     // Si hay un token de sesión válido, lee el perfil del usuario.
-    const user = await directus.users.me.read();
+    const user = await directus.users.read('me'); 
     return user;
   } catch (error) {
-    // Si la lectura falla (ej. tokens inválidos o expirados), la sesión ha terminado.
+    // La sesión ha expirado o es inválida
     return null;
   }
 }
 
 /**
- * Función para cerrar la sesión.
- * El SDK se encarga de llamar a /auth/logout y limpiar el storage.
+ * Cerrar sesión: Llama a /auth/logout y limpia localStorage.
  */
 export async function logout() {
   await directus.auth.logout();
-  // Después de hacer logout, el token se limpia automáticamente del storage
 }
 
+/**
+ * Hook de autenticación: Verifica si existe un token de sesión.
+ */
+export const useAuth = () => {
+    // La lógica de autenticación se basa en si existe el token en el almacenamiento local
+    const isAuthenticated = () => {
+        if (typeof window === 'undefined') return false;
+        // El SDK guarda el token de acceso bajo la clave "directus_access_token" por defecto.
+        return !!localStorage.getItem('directus_access_token');
+    };
 
-// Exportar la instancia de Directus para otras peticiones (ej. leer items)
+    return {
+        isAuthenticated,
+        login,
+        logout,
+        getCurrentUser,
+    };
+};
+
+// Exportar la instancia de Directus para otras peticiones (ej. leer items, aunque es mejor envolverlas)
 export { directus };
