@@ -42,7 +42,7 @@ Asegúrate de configurar estas variables de entorno en el panel de Hostinger:
 
 ```env
 DIRECTUS_URL=https://rayner-seguros.6vlrrp.easypanel.host
-DIRECTUS_TOKEN=VVnbHPcI1S_BkjM7jG8xN7qXnLCq2O8V
+DIRECTUS_TOKEN=0bGJAHZnl24NIQ4l8v_BUcFXhBKAikwu
 NODE_ENV=production
 NEXT_TELEMETRY_DISABLED=1
 ```
