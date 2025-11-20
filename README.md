@@ -1,161 +1,232 @@
-# Página de Prueba Docker
+# Mi Aplicación Next.js con Directus
 
-Este es un proyecto simple de página web estática que se puede desplegar usando Docker.
+Aplicación web construida con Next.js 16 y TypeScript, integrada con Directus para la autenticación y gestión de datos.
 
-## Archivos del Proyecto
+## Características
 
-- `index.html` - Página principal de la aplicación
-- `Dockerfile` - Configuración para construir la imagen Docker
-- `.dockerignore` - Archivos que se deben ignorar al construir la imagen Docker
+- ✅ Next.js 16 con TypeScript
+- ✅ Tailwind CSS para el diseño
+- ✅ Autenticación con Directus
+- ✅ Sistema de rutas protegidas con middleware
+- ✅ Manejo de sesiones y tokens
+- ✅ Docker para el despliegue
+- ✅ Formularios de login y registro con validación
+- ✅ Dashboard de usuario
 
-## Pasos para Subir a Git
+## Tecnologías Utilizadas
 
-### 1. Inicializar el repositorio Git
+- **Frontend**: Next.js 16, React, TypeScript, Tailwind CSS
+- **Autenticación**: Directus SDK
+- **Formularios**: React Hook Form con Zod para validación
+- **Diseño**: Tailwind CSS con componentes personalizados
+- **Despliegue**: Docker
 
-```bash
-git init
+## Estructura del Proyecto
+
+```
+├── app/                    # Rutas de Next.js App Router
+│   ├── login/             # Página de login
+│   ├── register/          # Página de registro
+│   ├── layout.tsx         # Layout principal
+│   └── page.tsx           # Página principal/dashboard
+├── components/            # Componentes de React
+│   ├── LoginForm.tsx      # Formulario de inicio de sesión
+│   └── RegisterForm.tsx   # Formulario de registro
+├── contexts/              # Contextos de React
+│   └── AuthContext.tsx    # Contexto de autenticación
+├── lib/                   # Utilidades y configuraciones
+│   ├── directus.ts        # Configuración de Directus
+│   └── useSession.ts      # Hook para manejar sesiones
+├── Dockerfile             # Configuración de Docker
+├── .dockerignore          # Archivos a ignorar en Docker
+├── deploy.sh             # Script de despliegue
+└── README.md             # Este archivo
 ```
 
-### 2. Agregar los archivos al repositorio
+## Configuración de Directus
 
-```bash
-git add .
+La aplicación está configurada para usar tu instancia de Directus:
+
+- **URL**: `https://rayner-seguros.6vlrrp.easypanel.host`
+- **Token**: `VVnbHPcI1S_BkjM7jG8xN7qXnLCq2O8V`
+
+Estas configuraciones se encuentran en el archivo `.env.local`.
+
+## Variables de Entorno
+
+Crea un archivo `.env.local` en la raíz del proyecto con las siguientes variables:
+
+```env
+# Configuración de Directus
+DIRECTUS_URL=https://rayner-seguros.6vlrrp.easypanel.host
+DIRECTUS_TOKEN=VVnbHPcI1S_BkjM7jG8xN7qXnLCq2O8V
+
+# Configuración de Next.js
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here
 ```
 
-### 3. Hacer el primer commit
+## Instalación y Ejecución
+
+### 1. Clonar el repositorio
 
 ```bash
-git commit -m "Página de prueba inicial con Docker"
+git clone <tu-repositorio>
+cd <directorio-del-proyecto>
 ```
 
-### 4. Conectar con tu repositorio remoto (reemplaza con tu URL de Git)
+### 2. Instalar dependencias
 
 ```bash
-git remote add origin https://github.com/tu-usuario/tu-repositorio.git
+npm install
 ```
 
-### 5. Subir los archivos a Git
+### 3. Configurar variables de entorno
+
+Copia el archivo `.env.local.example` a `.env.local` y configura las variables necesarias.
+
+### 4. Ejecutar en modo desarrollo
 
 ```bash
-git push -u origin main
+npm run dev
 ```
 
-## Pasos para Construir y Desplegar con Docker
+La aplicación estará disponible en `http://localhost:3000`.
+
+### 5. Ejecutar en modo producción
+
+```bash
+npm run build
+npm start
+```
+
+## Despliegue con Docker
 
 ### 1. Construir la imagen Docker
 
 ```bash
-docker build -t mi-pagina-prueba .
+./deploy.sh build
 ```
 
-### 2. (Opcional) Subir la imagen a Docker Hub
-
-Si deseas usar Docker Hub como intermediario:
+### 2. Iniciar la aplicación en producción
 
 ```bash
-# Etiquetar la imagen
-docker tag mi-pagina-prueba tu-usuario/mi-pagina-prueba:latest
+./deploy.sh start
+```
 
-# Iniciar sesión en Docker Hub
+### 3. Ver los logs
+
+```bash
+./deploy.sh logs
+```
+
+### 4. Detener la aplicación
+
+```bash
+./deploy.sh stop
+```
+
+### 5. Limpiar (eliminar contenedor e imagen)
+
+```bash
+./deploy.sh clean
+```
+
+### 6. Subir a Docker Hub
+
+```bash
+# Primero, inicia sesión en Docker Hub
 docker login
 
-# Subir la imagen
-docker push tu-usuario/mi-pagina-prueba:latest
+# Luego sube la imagen
+./deploy.sh push
 ```
 
-### 3. Desplegar en VPS de Hostinger
+## Despliegue en VPS de Hostinger
 
-#### Opción A: Usar Docker Hub
+### Opción A: Usar Docker directamente en tu VPS
 
-En tu VPS de Hostinger:
+1. Sube los archivos de tu proyecto al VPS
+2. Instala Docker en tu VPS
+3. Ejecuta los comandos de despliegue:
+   ```bash
+   ./deploy.sh build
+   ./deploy.sh start
+   ```
 
-```bash
-# Descargar la imagen desde Docker Hub
-docker pull tu-usuario/mi-pagina-prueba:latest
+### Opción B: Usar Docker Hub
 
-# Ejecutar el contenedor
-docker run -d -p 8080:80 --name mi-pagina tu-usuario/mi-pagina-prueba:latest
-```
+1. Sube tu imagen a Docker Hub:
+   ```bash
+   ./deploy.sh push
+   ```
+2. En tu VPS, descarga e inicia la imagen:
+   ```bash
+   docker pull tu-usuario/mi-aplicacion-next:latest
+   docker run -d -p 3000:3000 --name mi-app-next tu-usuario/mi-aplicacion-next:latest
+   ```
 
-#### Opción B: Construir directamente en el VPS
+## Características de Autenticación
 
-Clona el repositorio en tu VPS y construye la imagen allí:
+### Login
+- Formulario de inicio de sesión con email y contraseña
+- Validación con React Hook Form y Zod
+- Manejo de errores y estados de carga
+- Redirección automática al dashboard
 
-```bash
-# Clonar el repositorio
-git clone https://github.com/tu-usuario/tu-repositorio.git
-cd tu-repositorio
+### Registro
+- Formulario de registro con email, contraseña y datos personales
+- Validación de contraseñas
+- Registro automático y login posterior
+- Redirección al dashboard
 
-# Construir la imagen
-docker build -t mi-pagina-prueba .
+### Sesiones
+- Manejo de tokens de acceso y refresh
+- Almacenamiento seguro en localStorage
+- Verificación automática de sesión expirada
+- Refrescamiento automático de tokens
 
-# Ejecutar el contenedor
-docker run -d -p 8080:80 --name mi-pagina mi-pagina-prueba
-```
+### Rutas Protegidas
+- Middleware para proteger rutas
+- Redirección automática al login si no está autenticado
+- Mantenimiento de la URL de destino
 
-## Acceder a la Página
+## Endpoints de Directus
 
-Una vez que el contenedor esté en ejecución, puedes acceder a tu página web en:
+La aplicación utiliza los siguientes endpoints de Directus:
 
-- `http://localhost:8080` (si estás en el mismo servidor)
-- `http://tu-vps-ip:8080` (desde cualquier lugar)
-
-## Comandos Útiles
-
-### Ver contenedores en ejecución
-
-```bash
-docker ps
-```
-
-### Ver logs del contenedor
-
-```bash
-docker logs mi-pagina
-```
-
-### Detener un contenedor
-
-```bash
-docker stop mi-pagina
-```
-
-### Iniciar un contenedor detenido
-
-```bash
-docker start mi-pagina
-```
-
-### Eliminar un contenedor
-
-```bash
-docker rm mi-pagina
-```
-
-### Eliminar una imagen
-
-```bash
-docker rmi mi-pagina-prueba
-```
-
-## Configuración de Hostinger
-
-Si usas Hostinger, asegúrate de:
-
-1. **Abrir el puerto 8080** en el firewall de tu VPS
-2. **Configurar el dominio** para que apunte a tu IP de VPS
-3. **Configurar proxy inverso** (si usas HTTPS) para redirigir el tráfico
-
-## Notas Adicionales
-
-- La imagen se basa en Nginx Alpine, que es muy ligera
-- El contenedor expone el puerto 80 internamente y lo mapea al puerto 8080 de tu host
-- Puedes cambiar el puerto de mapeo modificando el flag `-p` en el comando `docker run`
+- `POST /auth/login` - Iniciar sesión
+- `POST /auth/logout` - Cerrar sesión
+- `POST /auth/refresh` - Refrescar token
+- `GET /users/me` - Obtener usuario actual
+- `PATCH /users/me` - Actualizar usuario actual
 
 ## Personalización
 
-Para personalizar la página:
+### Modificar la URL de Directus
 
-1. Edita el archivo `index.html`
-2. Vuelve a construir la imagen con `docker build -t mi-pagina-prueba .`
-3. Detén y elimina el contenedor antiguo, luego inicia uno nuevo
+1. Abre el archivo `lib/directus.ts`
+2. Modifica la variable `directusUrl` con tu nueva URL
+
+### Agregar nuevas rutas protegidas
+
+1. Asegúrate de que la ruta no esté en la lista de rutas públicas en `middleware.ts`
+2. El middleware se encargará automáticamente de protegerla
+
+### Personalizar el diseño
+
+1. Modifica los archivos en `app/` para cambiar el layout
+2. Usa Tailwind CSS para estilizar los componentes
+3. Los componentes de formulario están en `components/`
+
+## Contribución
+
+1. Fork el proyecto
+2. Crea tu rama de características (`git checkout -b feature/nueva-caracteristica`)
+3. Commit tus cambios (`git commit -am 'Añade nueva característica'`)
+4. Push a la rama (`git push origin feature/nueva-caracteristica`)
+5. Crea un Pull Request
+
+## Licencia
+
+MIT License - ver el archivo LICENSE para más detalles.

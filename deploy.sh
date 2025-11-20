@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Script de ayuda para desplegar la página de prueba con Docker
-# Uso: ./deploy.sh [build|push|run|stop|logs|clean]
+# Script de ayuda para desplegar la aplicación Next.js con Directus
+# Uso: ./deploy.sh [build|dev|start|stop|logs|clean]
 
 # Variables de configuración
-IMAGE_NAME="mi-pagina-prueba"
-CONTAINER_NAME="mi-pagina"
-PORT_MAPPING="8080:80"
+IMAGE_NAME="mi-aplicacion-next"
+CONTAINER_NAME="mi-app-next"
+PORT_MAPPING="3000:3000"
 
 # Función para mostrar ayuda
 show_help() {
@@ -14,17 +14,19 @@ show_help() {
     echo ""
     echo "Comandos disponibles:"
     echo "  build    Construir la imagen Docker"
-    echo "  run      Ejecutar el contenedor"
-    echo "  stop     Detener el contenedor"
+    echo "  dev      Iniciar la aplicación en modo desarrollo"
+    echo "  start    Iniciar la aplicación en producción"
+    echo "  stop     Detener la aplicación"
     echo "  logs     Ver los logs del contenedor"
     echo "  clean    Eliminar el contenedor y la imagen"
     echo "  push     Subir la imagen a Docker Hub (requiere login previo)"
     echo ""
     echo "Ejemplos:"
     echo "  $0 build          # Construir la imagen"
-    echo "  $0 run            # Ejecutar el contenedor en segundo plano"
-    echo "  $0 stop           # Detener el contenedor"
-    echo "  $0 logs           # Ver los logs del contenedor"
+    echo "  $0 dev            # Iniciar en modo desarrollo"
+    echo "  $0 start          # Iniciar en producción"
+    echo "  $0 stop           # Detener la aplicación"
+    echo "  $0 logs           # Ver los logs"
     echo "  $0 clean          # Limpiar contenedor e imagen"
     echo "  $0 push           # Subir a Docker Hub"
 }
@@ -41,9 +43,15 @@ build_image() {
     fi
 }
 
-# Función para ejecutar el contenedor
-run_container() {
-    echo "🚀 Iniciando el contenedor..."
+# Función para iniciar en modo desarrollo
+dev_mode() {
+    echo "🚀 Iniciando la aplicación en modo desarrollo..."
+    docker run -p $PORT_MAPPING --name $CONTAINER_NAME -it $IMAGE_NAME npm run dev
+}
+
+# Función para iniciar en producción
+start_prod() {
+    echo "🚀 Iniciando la aplicación en producción..."
     
     # Detener y eliminar el contenedor si ya existe
     if docker ps -a --format "table {{.Names}}" | grep -q "^$CONTAINER_NAME$"; then
@@ -56,29 +64,29 @@ run_container() {
     docker run -d -p $PORT_MAPPING --name $CONTAINER_NAME $IMAGE_NAME
     
     if [ $? -eq 0 ]; then
-        echo "✅ Contenedor iniciado exitosamente"
-        echo "🌐 Puedes acceder a tu página en: http://localhost:$PORT_MAPPING"
+        echo "✅ Aplicación iniciada exitosamente"
+        echo "🌐 Puedes acceder a tu aplicación en: http://localhost:$PORT_MAPPING"
         echo "   o desde fuera: http://$(curl -s ifconfig.me):$PORT_MAPPING"
     else
-        echo "❌ Error al iniciar el contenedor"
+        echo "❌ Error al iniciar la aplicación"
         exit 1
     fi
 }
 
-# Función para detener el contenedor
-stop_container() {
-    echo "🛑 Deteniendo el contenedor..."
+# Función para detener la aplicación
+stop_app() {
+    echo "🛑 Deteniendo la aplicación..."
     docker stop $CONTAINER_NAME
     if [ $? -eq 0 ]; then
-        echo "✅ Contenedor detenido exitosamente"
+        echo "✅ Aplicación detenida exitosamente"
     else
-        echo "❌ Error al detener el contenedor"
+        echo "❌ Error al detener la aplicación"
     fi
 }
 
 # Función para ver los logs
 show_logs() {
-    echo "📋 Mostrando logs del contenedor..."
+    echo "📋 Mostrando logs de la aplicación..."
     docker logs -f $CONTAINER_NAME
 }
 
@@ -134,11 +142,14 @@ case "$1" in
     build)
         build_image
         ;;
-    run)
-        run_container
+    dev)
+        dev_mode
+        ;;
+    start)
+        start_prod
         ;;
     stop)
-        stop_container
+        stop_app
         ;;
     logs)
         show_logs

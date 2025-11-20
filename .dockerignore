@@ -1,19 +1,19 @@
-# Archivos y directorios que se deben ignorar al construir la imagen Docker
-
-# Archivos de sistema
-.git
-.gitignore
-README.md
+# Dependencias
 node_modules
-npm-debug.log
-yarn-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Archivos de desarrollo
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Construcción
+.next
+out
+build
+dist
+
+# Archivos de entorno
+.env*.local
+.env.development
+.env.production
 
 # Logs
 *.log
@@ -28,6 +28,24 @@ yarn-debug.log
 .DS_Store
 Thumbs.db
 
+# Git
+.git
+.gitignore
+
 # Docker
 Dockerfile
 .dockerignore
+
+# Documentación
+README.md
+docs/
+
+# Archivos temporales
+*.tmp
+*.temp
+.cache
+
+# Testing
+.coverage
+.nyc_output
+test-results/
