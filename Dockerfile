@@ -1,5 +1,5 @@
 # Usar una imagen base oficial de Node.js
-FROM node:18-alpine AS base
+FROM node:22-alpine AS base
 
 # Instalar dependencias solo cuando sea necesario
 FROM base AS deps
@@ -24,9 +24,10 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+# Formato moderno: ENV KEY=value (evita warnings)
+ENV NODE_ENV=production
 # Deshabilitar logs en producción
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -46,9 +47,9 @@ USER nextjs
 
 EXPOSE 3000
 
-ENV PORT 3000
-# Establecer la variable de entorno HOSTNAME a 0.0.0.0
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+# Establecer la variable de entorno HOSTNAME a 0.0.0.0 (sin comillas, formato nuevo)
+ENV HOSTNAME=0.0.0.0
 
 # Correr la aplicación con el usuario nextjs
 CMD ["node", "server.js"]
