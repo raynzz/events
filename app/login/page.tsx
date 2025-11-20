@@ -1,19 +1,18 @@
-import LoginForm from '@/components/LoginForm';
+// Componente de Login (ej. app/login/page.tsx o LoginForm.tsx)
+import { login } from '@/lib/directus'; // Asegúrate de la ruta correcta
+// ...
 
-type LoginPageProps = {
-  searchParams?: {
-    callbackUrl?: string;
-    [key: string]: string | string[] | undefined;
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  // ... obtener email y password del formulario
+  
+  try {
+    const { user } = await login(email, password); // Usa la nueva función login
+    
+    // Si tiene éxito, redirigir
+    router.push('/dashboard'); 
+  } catch (error) {
+    // Mostrar mensaje de error al usuario
+    setErrorMessage((error as Error).message);
+  }
 };
-
-export default function LoginPage({ searchParams }: LoginPageProps) {
-  const rawCallback = searchParams?.callbackUrl;
-
-  const callbackUrl =
-    typeof rawCallback === 'string' && rawCallback.length > 0
-      ? rawCallback
-      : '/';
-
-  return <LoginForm callbackUrl={callbackUrl} />;
-}
