@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,15 +15,17 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+type LoginFormProps = {
+  callbackUrl?: string;
+};
+
+export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { login } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   const {
     register,
@@ -60,7 +62,7 @@ export default function LoginForm() {
             Para continuar, inicia sesión con tu cuenta
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
@@ -78,7 +80,7 @@ export default function LoginForm() {
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
-            
+
             <div className="relative">
               <label htmlFor="password" className="sr-only">
                 Contraseña
@@ -133,7 +135,10 @@ export default function LoginForm() {
           <div className="text-center">
             <p className="text-sm text-gray-600">
               ¿No tienes una cuenta?{' '}
-              <a href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <a
+                href="/register"
+                className="font-medium text-indigo-600 hover:text-indigo-500"
+              >
                 Regístrate aquí
               </a>
             </p>
