@@ -1,5 +1,5 @@
-# Usar una imagen base oficial de Node.js
-FROM node:22-alpine AS base
+# Usar una imagen base compatible con Hostinger
+FROM node:20-alpine AS base
 
 # Instalar dependencias solo cuando sea necesario
 FROM base AS deps
@@ -17,6 +17,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Configuración para Next.js 16
+ENV NEXT_TELEMETRY_DISABLED=1
+
 # Generar la aplicación Next.js
 RUN npm run build
 
@@ -26,12 +29,13 @@ WORKDIR /app
 
 # Formato moderno: ENV KEY=value (evita warnings)
 ENV NODE_ENV=production
-# Deshabilitar logs en producción
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Crear usuario y grupo para seguridad
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Copiar archivos públicos
 COPY --from=builder /app/public ./public
 
 # Configurar automáticamente las variables de entorno para las claves de API en el entorno de producción
@@ -45,10 +49,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
+# Exponer el puerto y configurar variables de entorno
 EXPOSE 3000
-
 ENV PORT=3000
-# Establecer la variable de entorno HOSTNAME a 0.0.0.0 (sin comillas, formato nuevo)
 ENV HOSTNAME=0.0.0.0
 
 # Correr la aplicación con el usuario nextjs
