@@ -8,8 +8,8 @@ Ya configurado en `.env.local`:
 - **Token**: `0bGJAHZnl24NIQ4l8v_BUcFXhBKAikwu`
 
 ### Credenciales de Usuario para Pruebas
-- **Email**: `raynerteran.ar@gmail.com`
-- **Contraseña**: `Holachao123.`
+- **Admin**: `admin` / `admin`
+- **Usuario**: `raynerteran.ar@gmail.com` / `Holachao123.`
 
 ## Variables de Entorno
 
