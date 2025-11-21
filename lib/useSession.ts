@@ -13,6 +13,12 @@ export const useSession = () => {
   // Cargar la sesión desde localStorage al montar el componente
   useEffect(() => {
     const loadSession = () => {
+      // Solo ejecutar en el cliente
+      if (typeof window === 'undefined') {
+        setLoading(false);
+        return;
+      }
+
       try {
         const savedSession = localStorage.getItem('directus_session');
         if (savedSession) {
@@ -37,21 +43,26 @@ export const useSession = () => {
       }
     };
 
+    // Cargar después de que el componente se monte en el cliente
     loadSession();
   }, []);
 
   // Guardar la sesión en localStorage
   const saveSession = (newSession: Session) => {
     setSession(newSession);
-    localStorage.setItem('directus_session', JSON.stringify(newSession));
-    localStorage.setItem('directus_token', newSession.accessToken);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('directus_session', JSON.stringify(newSession));
+      localStorage.setItem('directus_token', newSession.accessToken);
+    }
   };
 
   // Limpiar la sesión
   const clearSession = () => {
     setSession(null);
-    localStorage.removeItem('directus_session');
-    localStorage.removeItem('directus_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('directus_session');
+      localStorage.removeItem('directus_token');
+    }
   };
 
   // Verificar si la sesión es válida
@@ -75,7 +86,7 @@ export const useSession = () => {
     try {
       // Aquí iría la lógica para refrescar el token usando el refreshToken
       // Por ahora, simulamos que la sesión se refresca extendiendo su tiempo de vida
-      if (session) {
+      if (session && typeof window !== 'undefined') {
         const newSession = {
           ...session,
           expires: Date.now() + (24 * 60 * 60 * 1000), // 24 horas más

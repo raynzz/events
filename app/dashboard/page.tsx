@@ -140,58 +140,13 @@ export default function DashboardPage() {
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h2 className="text-2xl font-bold text-black mb-6">
-              {isDemoMode ? '🚀 Panel de Control - Modo Demo 3D' :
-               isGuestMode ? 'Panel de Control - Modo Invitado' : 'Panel de Control'}
+              Panel de Control
             </h2>
             
             {/* Main content area */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left column - Stats */}
               <div className="lg:col-span-2 space-y-8">
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">E</span>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-black">Eventos Creados</p>
-                        <p className="text-2xl font-semibold text-black">12</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">P</span>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-black">Eventos Participados</p>
-                        <p className="text-2xl font-semibold text-black">8</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">A</span>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-black">Asistentes Totales</p>
-                        <p className="text-2xl font-semibold text-black">156</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Demo 3D Visualization - Only shown in demo mode */}
                 {isDemoMode && (
@@ -354,25 +309,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* User Profile */}
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-semibold text-black mb-4">Perfil</h3>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
-                      <span className="text-white text-lg font-bold">
-                        {isGuestMode || isDemoMode ? '👤' : (user?.first_name?.[0] || user?.email?.[0] || 'U')}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-black">
-                        {isGuestMode ? 'Invitado' : isDemoMode ? 'Usuario Demo' : user?.first_name || user?.email}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {isGuestMode ? 'Sin autenticar' : isDemoMode ? 'Modo demo' : 'Usuario registrado'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
             

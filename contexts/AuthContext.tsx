@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, login as loginDirectus, logout as logoutDirectus, getCurrentUser } from '@/lib/directus';
+import { User, login as loginDirectus, logout as logoutDirectus, getCurrentUser, updateCurrentUser } from '@/lib/directus';
 import { useSession } from '@/lib/useSession';
 
 interface AuthContextType {
@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -104,12 +105,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = async (userData: Partial<User>) => {
+    try {
+      const updatedUser = await updateCurrentUser(userData);
+      setUser(updatedUser);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     loading,
     login,
     logout,
     refreshUser,
+    updateUser,
     isAuthenticated: isValid() && !!user,
   };
 
