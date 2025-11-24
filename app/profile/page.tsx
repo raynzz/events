@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, getAssetUrl } from '@/lib/directus';
+import { User, getAssetUrl, uploadFile } from '@/lib/directus';
 import Avatar from '@/components/Avatar';
 
 export default function ProfilePage() {
@@ -18,6 +18,10 @@ export default function ProfilePage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Permitir acceso a invitados y usuarios autenticados
@@ -41,17 +45,67 @@ export default function ProfilePage() {
     }));
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar que sea una imagen
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona un archivo de imagen');
+        return;
+      }
+
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('La imagen no debe superar los 5MB');
+        return;
+      }
+
+      setAvatarFile(file);
+
+      // Crear preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadAvatar = async () => {
+    if (!avatarFile) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      // Subir el archivo a Directus
+      const fileId = await uploadFile(avatarFile);
+
+      // Actualizar el usuario con el nuevo avatar
+      if (updateUser) {
+        await updateUser({ avatar: fileId });
+      }
+
+      // Limpiar el preview y el archivo
+      setAvatarFile(null);
+      setAvatarPreview(null);
+
+      alert('Avatar actualizado exitosamente');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Error al subir el avatar. Por favor intenta nuevamente.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // En una aplicación real, aquí se llamaría a la API
-      console.log('Actualizando usuario:', formData);
-
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
       // Actualizar el contexto de autenticación
       if (updateUser) {
         await updateUser({
@@ -84,6 +138,8 @@ export default function ProfilePage() {
     }
     setIsEditing(false);
     setSaveSuccess(false);
+    setAvatarFile(null);
+    setAvatarPreview(null);
   };
 
   if (loading) {
@@ -167,17 +223,66 @@ export default function ProfilePage() {
           {/* Profile Header */}
           <div className="p-8 border-b border-gray-200">
             <div className="flex items-center space-x-6">
-              <Avatar
-                src={avatarUrl}
-                alt={`${user.first_name} ${user.last_name}`}
-                size="lg"
-                fallbackText={initials}
-              />
+              <div className="relative">
+                <Avatar
+                  src={avatarPreview || avatarUrl}
+                  alt={`${user.first_name} ${user.last_name}`}
+                  size="lg"
+                  fallbackText={initials}
+                />
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+                {/* Change avatar button */}
+                <button
+                  onClick={handleAvatarClick}
+                  className="absolute bottom-0 right-0 bg-black text-white p-2 rounded-full hover:bg-gray-800 transition-colors"
+                  title="Cambiar avatar"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+              </div>
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-black">
                   {user.first_name} {user.last_name}
                 </h2>
                 <p className="text-gray-600">{user.email}</p>
+
+                {/* Avatar upload controls */}
+                {avatarFile && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-sm text-blue-800 mb-2">
+                      Nueva imagen seleccionada: {avatarFile.name}
+                    </p>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleUploadAvatar}
+                        disabled={isUploadingAvatar}
+                        className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {isUploadingAvatar ? 'Subiendo...' : 'Subir Avatar'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAvatarFile(null);
+                          setAvatarPreview(null);
+                        }}
+                        className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center space-x-3 mt-2">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                     {getRoleText(user.role)}

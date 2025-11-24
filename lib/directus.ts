@@ -322,15 +322,44 @@ export const deleteItem = async (collection: string, id: string) => {
 
   if (!response.ok) {
     throw new Error('Delete item failed');
+    throw new Error('Delete item failed');
   }
 
   return response.json();
 };
 
-// Helper function to get asset URL from Directus
-export const getAssetUrl = (fileId: string | null | undefined): string | null => {
+// Helper function to get asset URL
+export function getAssetUrl(fileId: string | null | undefined): string | null {
   if (!fileId) return null;
-  return `${directusUrl}/assets/${fileId}`;
+
+  // Si fileId ya es una URL completa, retornarla
+  if (fileId.startsWith('http')) return fileId;
+
+  // Construir la URL del asset
+  const baseUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || process.env.DIRECTUS_URL || directusUrl;
+  return `${baseUrl}/assets/${fileId}`;
+}
+
+// Upload file to Directus
+export const uploadFile = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${directusUrl}/files`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('directus_access_token') : directusToken}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'File upload failed');
+  }
+
+  const data = await response.json();
+  return data.data.id; // Return the file ID
 };
 
 // Hook personalizado para manejar la autenticación

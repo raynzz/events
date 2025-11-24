@@ -67,6 +67,21 @@ export const useSession = () => {
 
   // Verificar si la sesión es válida
   const isValid = () => {
+    // Primero verificar si hay un token directo en localStorage
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('directus_access_token');
+      if (token) {
+        // Si hay token, verificar si hay sesión con expiración
+        if (session) {
+          const now = Date.now();
+          return session.expires > now;
+        }
+        // Si hay token pero no sesión, asumir que es válido
+        return true;
+      }
+    }
+
+    // Si no hay token directo, verificar la sesión
     if (!session) return false;
 
     const now = Date.now();
