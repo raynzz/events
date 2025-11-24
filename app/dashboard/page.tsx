@@ -11,33 +11,16 @@ export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
-
-  useEffect(() => {
-    // Si el usuario está cargando, no hacemos nada
-    if (loading) return;
-  }, [loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Determinar si es modo invitado o usuario autenticado
-  const isGuestMode = !user;
-
-
-  // Fetch stats
   const [stats, setStats] = useState({
     totalEvents: 0,
     upcomingEvents: 0,
     totalAttendees: 0
   });
+
+  useEffect(() => {
+    // Si el usuario está cargando, no hacemos nada
+    if (loading) return;
+  }, [loading, router]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -78,6 +61,20 @@ export default function DashboardPage() {
   const displayName = user?.first_name
     ? `${user.first_name} ${user.last_name || ''}`.trim()
     : user?.email || 'Invitado';
+
+  // Determinar si es modo invitado o usuario autenticado
+  const isGuestMode = !user;
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
