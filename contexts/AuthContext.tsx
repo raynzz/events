@@ -59,16 +59,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       const response = await loginDirectus(email, password);
-      
+
       // Guardamos la sesión en localStorage
-      if (response.data && response.data.access_token) {
+      // La respuesta de loginDirectus ya es data.data, por lo que accedemos directamente a las propiedades
+      if (response && response.access_token) {
         const sessionData = {
-          accessToken: response.data.access_token,
-          refreshToken: response.data.refresh_token || '',
-          expires: Date.now() + (response.data.expires_in || 3600) * 1000, // Por defecto 1 hora
+          accessToken: response.access_token,
+          refreshToken: response.refresh_token || '',
+          expires: Date.now() + (response.expires_in || 3600) * 1000, // Por defecto 1 hora
         };
         saveSession(sessionData);
-        
+
         // Actualizamos el usuario actual
         const currentUser = await getCurrentUser();
         setUser(currentUser);

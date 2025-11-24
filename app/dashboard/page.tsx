@@ -2,30 +2,16 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
-import FluidSimulation3D from '@/components/FluidSimulation3D';
-import DataVisualization3D from '@/components/DataVisualization3D';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     // Si el usuario está cargando, no hacemos nada
     if (loading) return;
-    
-    // Verificar si estamos en modo demo
-    if (typeof window !== 'undefined') {
-      const demoMode = localStorage.getItem('demo_mode') === 'true';
-      setIsDemoMode(demoMode);
-      
-      // Limpiar el flag después de usarlo
-      if (demoMode) {
-        localStorage.removeItem('demo_mode');
-      }
-    }
   }, [loading, router]);
 
   if (loading) {
@@ -73,7 +59,7 @@ export default function DashboardPage() {
                 </Link>
               </nav>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <Link
                 href="/events/create"
@@ -81,22 +67,22 @@ export default function DashboardPage() {
               >
                 + Nuevo Evento
               </Link>
-              
+
               <div className="relative">
                 <button className="flex items-center space-x-2 text-sm text-gray-700 hover:text-black focus:outline-none">
                   <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-bold">
-                      {isGuestMode || isDemoMode ? '👤' : (user?.first_name?.[0] || user?.email?.[0] || 'U')}
+                      {isGuestMode ? '👤' : (user?.first_name?.[0] || user?.email?.[0] || 'U')}
                     </span>
                   </div>
                   <span className="hidden md:block">
-                    {isGuestMode ? 'Invitado' : isDemoMode ? 'Usuario Demo' : user?.first_name || user?.email}
+                    {isGuestMode ? 'Invitado' : user?.first_name || user?.email}
                   </span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                   </svg>
                 </button>
-                
+
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 hidden z-50">
                   <div className="py-1">
                     <Link
@@ -142,36 +128,42 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold text-black mb-6">
               Panel de Control
             </h2>
-            
+
             {/* Main content area */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left column - Stats */}
               <div className="lg:col-span-2 space-y-8">
 
-                {/* Demo 3D Visualization - Only shown in demo mode */}
-                {isDemoMode && (
-                  <div className="space-y-6">
-                    <div className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">🌊 Simulación de Fluidos 3D</h3>
-                      <div className="h-64 rounded-lg overflow-hidden bg-black/5">
-                        <FluidSimulation3D />
+                {/* User Info Card */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Información del Usuario</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center text-2xl text-white font-bold">
+                        {user?.first_name?.[0] || user?.email?.[0] || 'U'}
                       </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        Visualización de partículas con comportamiento fluido dinámico
-                      </p>
+                      <div>
+                        <p className="text-xl font-medium text-black">
+                          {user?.first_name} {user?.last_name}
+                        </p>
+                        <p className="text-gray-500">{user?.email}</p>
+                      </div>
                     </div>
-                    
-                    <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">🎨 Visualización de Datos con Shaders</h3>
-                      <div className="h-64 rounded-lg overflow-hidden bg-black/5">
-                        <DataVisualization3D />
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                      <div>
+                        <p className="text-sm text-gray-500">Rol</p>
+                        <p className="font-medium capitalize">{user?.role || 'Usuario'}</p>
                       </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        Geometría 3D animada con shaders personalizados en tiempo real
-                      </p>
+                      <div>
+                        <p className="text-sm text-gray-500">Estado</p>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                          {user?.status || 'Activo'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Quick Actions */}
                 <div className="border-t border-gray-200 pt-6">
@@ -186,7 +178,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-600 mt-1">Crear un evento nuevo</p>
                       </div>
                     </Link>
-                    
+
                     <Link href="/events">
                       <div className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200">
                         <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center mb-3">
@@ -196,7 +188,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-600 mt-1">Todos tus eventos</p>
                       </div>
                     </Link>
-                    
+
                     <Link href="/events/calendar">
                       <div className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200">
                         <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center mb-3">
@@ -206,7 +198,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-600 mt-1">Vista mensual</p>
                       </div>
                     </Link>
-                    
+
                     <Link href="/analytics">
                       <div className="bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200">
                         <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center mb-3">
@@ -235,7 +227,7 @@ export default function DashboardPage() {
                         Ver detalles
                       </Link>
                     </div>
-                    
+
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                       <div className="flex items-center">
                         <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
@@ -248,7 +240,7 @@ export default function DashboardPage() {
                         Ver detalles
                       </Link>
                     </div>
-                    
+
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                       <div className="flex items-center">
                         <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
@@ -273,15 +265,6 @@ export default function DashboardPage() {
                     <p className="text-sm text-blue-800">
                       <strong>Modo Invitado:</strong> Estás viendo una versión de demostración del dashboard.
                       <Link href="/login" className="underline ml-1">Inicia sesión</Link> para acceder a todas las funcionalidades.
-                    </p>
-                  </div>
-                )}
-
-                {/* Demo Notice */}
-                {isDemoMode && (
-                  <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
-                    <p className="text-sm text-purple-800">
-                      <strong>🚀 Modo Demo 3D:</strong> Disfruta de visualizaciones 3D interactivas con simulación de fluidos y shaders avanzados.
                     </p>
                   </div>
                 )}
@@ -311,7 +294,7 @@ export default function DashboardPage() {
 
               </div>
             </div>
-            
+
           </div>
         </div>
       </main>

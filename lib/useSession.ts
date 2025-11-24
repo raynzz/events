@@ -23,7 +23,7 @@ export const useSession = () => {
         const savedSession = localStorage.getItem('directus_session');
         if (savedSession) {
           const parsedSession = JSON.parse(savedSession);
-          
+
           // Verificar si la sesión ha expirado
           const now = Date.now();
           if (parsedSession.expires > now) {
@@ -52,7 +52,7 @@ export const useSession = () => {
     setSession(newSession);
     if (typeof window !== 'undefined') {
       localStorage.setItem('directus_session', JSON.stringify(newSession));
-      localStorage.setItem('directus_token', newSession.accessToken);
+      localStorage.setItem('directus_access_token', newSession.accessToken);
     }
   };
 
@@ -61,14 +61,14 @@ export const useSession = () => {
     setSession(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('directus_session');
-      localStorage.removeItem('directus_token');
+      localStorage.removeItem('directus_access_token');
     }
   };
 
   // Verificar si la sesión es válida
   const isValid = () => {
     if (!session) return false;
-    
+
     const now = Date.now();
     return session.expires > now;
   };
@@ -76,7 +76,7 @@ export const useSession = () => {
   // Obtener el tiempo restante de la sesión en segundos
   const getTimeLeft = () => {
     if (!session) return 0;
-    
+
     const now = Date.now();
     return Math.max(0, Math.floor((session.expires - now) / 1000));
   };
