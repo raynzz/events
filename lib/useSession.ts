@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface Session {
   accessToken: string;
@@ -48,25 +48,25 @@ export const useSession = () => {
   }, []);
 
   // Guardar la sesión en localStorage
-  const saveSession = (newSession: Session) => {
+  const saveSession = useCallback((newSession: Session) => {
     setSession(newSession);
     if (typeof window !== 'undefined') {
       localStorage.setItem('directus_session', JSON.stringify(newSession));
       localStorage.setItem('directus_access_token', newSession.accessToken);
     }
-  };
+  }, []);
 
   // Limpiar la sesión
-  const clearSession = () => {
+  const clearSession = useCallback(() => {
     setSession(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('directus_session');
       localStorage.removeItem('directus_access_token');
     }
-  };
+  }, []);
 
   // Verificar si la sesión es válida
-  const isValid = () => {
+  const isValid = useCallback(() => {
     // Primero verificar si hay un token directo en localStorage
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('directus_access_token');
@@ -86,18 +86,18 @@ export const useSession = () => {
 
     const now = Date.now();
     return session.expires > now;
-  };
+  }, [session]);
 
   // Obtener el tiempo restante de la sesión en segundos
-  const getTimeLeft = () => {
+  const getTimeLeft = useCallback(() => {
     if (!session) return 0;
 
     const now = Date.now();
     return Math.max(0, Math.floor((session.expires - now) / 1000));
-  };
+  }, [session]);
 
   // Refrescar la sesión (esto se implementaría con la API de Directus)
-  const refreshSession = async () => {
+  const refreshSession = useCallback(async () => {
     try {
       // Aquí iría la lógica para refrescar el token usando el refreshToken
       // Por ahora, simulamos que la sesión se refresca extendiendo su tiempo de vida
@@ -113,7 +113,7 @@ export const useSession = () => {
       clearSession();
       throw error;
     }
-  };
+  }, [session, saveSession, clearSession]);
 
   return {
     session,
