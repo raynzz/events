@@ -60,10 +60,9 @@ export default function DashboardPage() {
     : user?.email?.charAt(0).toUpperCase() || 'U';
   const displayName = user?.first_name
     ? `${user.first_name} ${user.last_name || ''}`.trim()
-    : user?.email || 'Invitado';
+    : user?.email || 'Usuario';
 
-  // Determinar si es modo invitado o usuario autenticado
-  const isGuestMode = !user;
+
 
   if (loading) {
     return (
@@ -153,22 +152,12 @@ export default function DashboardPage() {
                         Configuración
                       </Link>
                       <div className="border-t border-gray-100"></div>
-                      {isGuestMode ? (
-                        <Link
-                          href="/login"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          Iniciar sesión
-                        </Link>
-                      ) : (
-                        <button
-                          onClick={handleLogout}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          Cerrar sesión
-                        </button>
-                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Cerrar sesión
+                      </button>
                     </div>
                   </div>
                 )}
@@ -318,15 +307,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </div>
-                {/* Guest Notice */}
-                {isGuestMode && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      <strong>Modo Invitado:</strong> Estás viendo una versión de demostración del dashboard.
-                      <Link href="/login" className="underline ml-1">Inicia sesión</Link> para acceder a todas las funcionalidades.
-                    </p>
-                  </div>
-                )}
+
 
                 {/* Quick Stats */}
                 <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">

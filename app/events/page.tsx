@@ -40,7 +40,7 @@ export default function EventsPage() {
 
         const mappedEvents: Event[] = data.map((item: any) => ({
           id: item.id,
-          title: item.name,
+          title: item.title,
           description: item.description,
           startDate: item.start_date,
           endDate: item.end_date,
