@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,21 +42,40 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     name: '',
     contact_name: '',
     email: '',
-    const fetchProviders = async () => {
-      if (!id) return;
-      setIsLoadingProviders(true);
+    phone: '',
+    description: '',
+  });
+
+  // Fetch event details
+  useEffect(() => {
+    if (!id) return;
+    const fetchEvent = async () => {
       try {
-        const data = await readEventProviders(id);
-        setProviders(data || []);
+        const data = await readItem('events', id);
+        setEvent(data);
       } catch (error) {
-        console.error('Error fetching providers:', error);
-        setProviders([]);
-      } finally {
-        setIsLoadingProviders(false);
+        console.error('Error fetching event:', error);
       }
     };
+    fetchEvent();
+  }, [id]);
 
-    useEffect(() => {
+  // Fetch providers for the event
+  const fetchProviders = async () => {
+    if (!id) return;
+    setIsLoadingProviders(true);
+    try {
+      const data = await readEventProviders(id);
+      setProviders(data || []);
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      setProviders([]);
+    } finally {
+      setIsLoadingProviders(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProviders();
   }, [id]);
 
@@ -87,7 +106,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       contact_name: provider.contact_name || '',
       email: provider.email || '',
       phone: provider.phone || '',
-      description: provider.description || ''
+      description: provider.description || '',
     });
     setShowProviderForm(true);
   };
@@ -181,9 +200,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
-                {getStatusText(event.status)}
-              </span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>${'{'}getStatusText(event.status)}${'}'}</span>
             </div>
           </div>
         </div>
@@ -326,7 +343,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-lg font-bold text-black">{provider.name}</h3>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 ${getStatusColor(provider.status)}`}>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(provider.status)}`}>
                         {getStatusText(provider.status)}
                       </span>
                     </div>
