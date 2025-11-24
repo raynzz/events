@@ -26,7 +26,7 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       try {
         const { readItems } = await import('@/lib/directus');
-        const events = await readItems('events', {
+        const events = await readItems('eventos', {
           fields: ['id', 'start_date', 'status']
         });
 

@@ -375,7 +375,7 @@ export const createEvent = async (eventData: {
   status?: string;
   Responsable?: string; // ID del usuario responsable
 }) => {
-  const response = await fetch(`${directusUrl}/items/events`, {
+  const response = await fetch(`${directusUrl}/items/eventos`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({
@@ -394,7 +394,7 @@ export const createEvent = async (eventData: {
 
 // Read events filtered by user
 export const readUserEvents = async (userId: string) => {
-  const response = await fetch(`${directusUrl}/items/events?filter[user_created][_eq]=${userId}&sort=-date_created&fields=*`, {
+  const response = await fetch(`${directusUrl}/items/eventos?filter[user_created][_eq]=${userId}&sort=-date_created&fields=*`, {
     headers: getHeaders(),
   });
 
