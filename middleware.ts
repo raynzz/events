@@ -12,17 +12,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Verificar si hay un token de autenticación en las cookies
-  const token = request.cookies.get('directus_token')?.value;
-  
-  // Si no hay token y no es una ruta pública, redirigir al login
-  if (!token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Si hay token, permitir el acceso
+  // Para rutas que requieren autenticación (como /dashboard), permitir el acceso
+  // La verificación de autenticación se hará en el lado del cliente
+  // Esto es necesario para el despliegue estático de Next.js
   return NextResponse.next();
 }
 
