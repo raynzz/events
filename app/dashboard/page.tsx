@@ -5,12 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
-import { getAssetUrl } from '@/lib/directus';
+import { getAssetUrl, readUserEvents } from '@/lib/directus';
+
+interface Event {
+  id: string;
+  title: string;
+  start_date: string;
+  status: string;
+  date_created: string;
+}
 
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [events, setEvents] = useState<Event[]>([]);
   const [stats, setStats] = useState({
     totalEvents: 0,
     upcomingEvents: 0,
@@ -24,17 +33,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      if (!user?.id) return;
+
       try {
-        const { readItems } = await import('@/lib/directus');
-        const events = await readItems('eventos', {
-          fields: ['id', 'start_date', 'status']
-        });
+        const userEvents = await readUserEvents(user.id);
+        setEvents(userEvents);
 
         const now = new Date();
-        const upcoming = events.filter((e: any) => new Date(e.start_date) > now).length;
+        const upcoming = userEvents.filter((e: any) => new Date(e.start_date) > now).length;
 
         setStats({
-          totalEvents: events.length,
+          totalEvents: userEvents.length,
           upcomingEvents: upcoming,
           totalAttendees: 0 // We don't have this data yet
         });
@@ -61,8 +70,6 @@ export default function DashboardPage() {
   const displayName = user?.first_name
     ? `${user.first_name} ${user.last_name || ''}`.trim()
     : user?.email || 'Usuario';
-
-
 
   if (loading) {
     return (
@@ -230,44 +237,26 @@ export default function DashboardPage() {
                 <div className="border-t border-gray-200 pt-6">
                   <h3 className="text-lg font-medium text-black mb-4">Actividad Reciente</h3>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center">
-                        <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
-                        <div>
-                          <p className="text-sm font-medium text-black">Evento "Conferencia Tech" creado</p>
-                          <p className="text-sm text-gray-500">Hace 2 horas</p>
+                    {events.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No hay actividad reciente.</p>
+                    ) : (
+                      events.slice(0, 3).map((event) => (
+                        <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-center">
+                            <div className={`w-2 h-2 rounded-full mr-3 ${event.status === 'published' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                            <div>
+                              <p className="text-sm font-medium text-black">{event.title}</p>
+                              <p className="text-sm text-gray-500">
+                                {new Date(event.date_created).toLocaleDateString('es-AR')}
+                              </p>
+                            </div>
+                          </div>
+                          <Link href={`/events/${event.id}`} className="text-sm text-black hover:text-gray-700 underline">
+                            Ver detalles
+                          </Link>
                         </div>
-                      </div>
-                      <Link href="/events/1" className="text-sm text-black hover:text-gray-700 underline">
-                        Ver detalles
-                      </Link>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center">
-                        <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
-                        <div>
-                          <p className="text-sm font-medium text-black">Nuevo registro en "Workshop de React"</p>
-                          <p className="text-sm text-gray-500">Hace 5 horas</p>
-                        </div>
-                      </div>
-                      <Link href="/events/2" className="text-sm text-black hover:text-gray-700 underline">
-                        Ver detalles
-                      </Link>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center">
-                        <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
-                        <div>
-                          <p className="text-sm font-medium text-black">Recordatorio: "Meetup de Desarrollo"</p>
-                          <p className="text-sm text-gray-500">Mañana a las 18:00</p>
-                        </div>
-                      </div>
-                      <Link href="/events/3" className="text-sm text-black hover:text-gray-700 underline">
-                        Ver detalles
-                      </Link>
-                    </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -314,7 +303,7 @@ export default function DashboardPage() {
                   <h3 className="text-lg font-semibold text-black mb-4">Resumen Rápido</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Eventos este mes</span>
+                      <span className="text-sm text-gray-600">Total Eventos</span>
                       <span className="text-sm font-medium text-black">{stats.totalEvents}</span>
                     </div>
                     <div className="flex justify-between">
@@ -323,7 +312,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Tasa de asistencia</span>
-                      <span className="text-sm font-medium text-black">87%</span>
+                      <span className="text-sm font-medium text-black">0%</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Próximo evento</span>

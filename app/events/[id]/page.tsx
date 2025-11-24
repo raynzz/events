@@ -42,41 +42,21 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     name: '',
     contact_name: '',
     email: '',
-    phone: '',
-    description: ''
-  });
-
-  // Fetch event details
-  useEffect(() => {
-    const fetchEvent = async () => {
+    const fetchProviders = async () => {
       if (!id) return;
+      setIsLoadingProviders(true);
       try {
-        const data = await readItem('eventos', id, { fields: ['*'] });
-        setEvent(data);
+        const data = await readEventProviders(id);
+        setProviders(data || []);
       } catch (error) {
-        console.error('Error fetching event data:', error);
-        setEvent(null);
+        console.error('Error fetching providers:', error);
+        setProviders([]);
+      } finally {
+        setIsLoadingProviders(false);
       }
     };
-    fetchEvent();
-  }, [id]);
 
-  // Fetch providers for this event
-  const fetchProviders = async () => {
-    if (!id) return;
-    setIsLoadingProviders(true);
-    try {
-      const data = await readEventProviders(id);
-      setProviders(data || []);
-    } catch (error) {
-      console.error('Error fetching providers:', error);
-      setProviders([]);
-    } finally {
-      setIsLoadingProviders(false);
-    }
-  };
-
-  useEffect(() => {
+    useEffect(() => {
     fetchProviders();
   }, [id]);
 
