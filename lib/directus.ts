@@ -121,48 +121,73 @@ export const register = async (
   firstName: string,
   lastName: string
 ) => {
-  // Primero, obtener el UUID del rol "User"
-  const rolesResponse = await fetch(`${directusUrl}/roles?filter[name][_eq]=User`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${directusToken}`, // Usar token de admin para crear usuarios
-    },
-  });
+  try {
+    // Intentar obtener todos los roles disponibles
+    const rolesResponse = await fetch(`${directusUrl}/roles`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${directusToken}`,
+      },
+    });
 
-  if (!rolesResponse.ok) {
-    throw new Error('Failed to fetch user role');
-  }
+    let roleId = null;
 
-  const rolesData = await rolesResponse.json();
-  const userRole = rolesData.data?.[0];
+    if (rolesResponse.ok) {
+      const rolesData = await rolesResponse.json();
+      console.log('Available roles:', rolesData.data); // Debug
 
-  if (!userRole) {
-    throw new Error('User role not found. Please contact administrator.');
-  }
+      // Buscar el rol "User" (case insensitive)
+      const userRole = rolesData.data?.find((role: any) =>
+        role.name?.toLowerCase() === 'user'
+      );
 
-  // Crear el usuario con el rol correcto
-  const response = await fetch(`${directusUrl}/users`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${directusToken}`, // Usar token de admin para crear usuarios
-    },
-    body: JSON.stringify({
+      if (userRole) {
+        roleId = userRole.id;
+      } else if (rolesData.data && rolesData.data.length > 0) {
+        // Si no hay rol "User", usar el primer rol disponible que no sea admin
+        const nonAdminRole = rolesData.data.find((role: any) =>
+          role.name?.toLowerCase() !== 'administrator' &&
+          role.name?.toLowerCase() !== 'admin'
+        );
+        roleId = nonAdminRole?.id || rolesData.data[0].id;
+        console.log('Using fallback role:', roleId);
+      }
+    }
+
+    // Crear el usuario
+    const userData: any = {
       email,
       password,
       first_name: firstName,
       last_name: lastName,
-      role: userRole.id,
       status: 'active',
-    }),
-  });
+    };
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.errors?.[0]?.message || 'Registration failed');
+    // Solo agregar el rol si se encontró uno
+    if (roleId) {
+      userData.role = roleId;
+    }
+
+    const response = await fetch(`${directusUrl}/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${directusToken}`,
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Registration error:', error);
+      throw new Error(error.errors?.[0]?.message || 'Registration failed');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Register function error:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 // Funciones de usuario
