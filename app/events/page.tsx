@@ -333,7 +333,7 @@ export default function EventsPage() {
 
                     <div className="ml-6 flex flex-col space-y-2">
                       <Link
-                        href={`/events/${event.id}/temp-detail`}
+                        href={`/events/temp-detail/${event.id}`}
                         className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
                       >
                         Ver Detalles
