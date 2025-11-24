@@ -1,0 +1,41 @@
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+
+      const { createEvent } = await import('@/lib/directus');
+
+      // Verificar que el usuario esté logueado
+      if (!user?.id) {
+        alert('Debes estar logueado para crear un evento');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Map form data to Directus schema - only send fields that exist
+      const eventData = {
+        title: formData.title,
+        description: formData.description,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        location: formData.location,
+        capacity: formData.capacity,
+        price: formData.price,
+        requires_liquor_license: formData.requiresLiquorLicense,
+        status: 'draft',
+        Responsable: user.id, // Asignar el usuario logueado como responsable
+      };
+
+      const result = await createEvent(eventData);
+
+      // Show success message
+      alert('¡Evento creado exitosamente!');
+
+      // Redirect to events list
+      router.push(`/events`);
+    } catch (error) {
+      console.error('Error creating event:', error);
+      alert(`Error al crear el evento: ${error instanceof Error ? error.message : 'Por favor intenta nuevamente.'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };

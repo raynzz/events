@@ -1,0 +1,36 @@
+  // Fetch events from Directus
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        // Solo cargar eventos si el usuario está logueado
+        if (!user?.id) {
+          setEvents([]);
+          return;
+        }
+
+        const { readUserEvents } = await import('@/lib/directus');
+        const data = await readUserEvents(user.id);
+
+        const mappedEvents: Event[] = data.map((item: any) => ({
+          id: item.id,
+          title: item.name,
+          description: item.description,
+          startDate: item.start_date,
+          endDate: item.end_date,
+          location: item.location,
+          capacity: item.capacity,
+          price: item.price,
+          category: 'conferencia',
+          requiresLiquorLicense: item.requires_liquor_license,
+          status: item.status,
+          createdAt: item.date_created
+        }));
+
+        setEvents(mappedEvents);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    };
+
+    fetchEvents();
+  }, [user]);

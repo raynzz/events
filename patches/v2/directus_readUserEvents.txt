@@ -1,0 +1,13 @@
+// Read events filtered by user
+export const readUserEvents = async (userId: string) => {
+  const response = await fetch(`${directusUrl}/items/events?filter[user_created][_eq]=${userId}&sort=-date_created&fields=*`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to read user events');
+  }
+
+  const data = await response.json();
+  return data.data;
+};

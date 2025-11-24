@@ -28,13 +28,15 @@ export default function EventsPage() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // Import dynamically to avoid server-side issues if any, though readItems is safe
-        const { readItems } = await import('@/lib/directus');
+        // Solo cargar eventos si el usuario está logueado
+        if (!user?.id) {
+          setEvents([]);
+          return;
+        }
 
-        const data = await readItems('events', {
-          sort: ['-date_created'],
-          fields: ['*']
-        });
+        const { readUserEvents } = await import('@/lib/directus');
+
+        const data = await readUserEvents(user.id);
 
         const mappedEvents: Event[] = data.map((item: any) => ({
           id: item.id,
@@ -58,7 +60,7 @@ export default function EventsPage() {
     };
 
     fetchEvents();
-  }, []);
+  }, [user]);
 
   const filteredEvents = events.filter(event => {
     const now = new Date();
@@ -226,8 +228,8 @@ export default function EventsPage() {
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'all'
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Todos
@@ -235,8 +237,8 @@ export default function EventsPage() {
             <button
               onClick={() => setFilter('upcoming')}
               className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'upcoming'
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Próximos
@@ -244,8 +246,8 @@ export default function EventsPage() {
             <button
               onClick={() => setFilter('past')}
               className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'past'
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Pasados
@@ -253,8 +255,8 @@ export default function EventsPage() {
             <button
               onClick={() => setFilter('draft')}
               className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'draft'
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Borradores

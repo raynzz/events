@@ -373,6 +373,7 @@ export const createEvent = async (eventData: {
   price: number;
   requires_liquor_license: boolean;
   status?: string;
+  Responsable?: string; // ID del usuario responsable
 }) => {
   const response = await fetch(`${directusUrl}/items/events`, {
     method: 'POST',
@@ -389,6 +390,20 @@ export const createEvent = async (eventData: {
   }
 
   return response.json();
+};
+
+// Read events filtered by user
+export const readUserEvents = async (userId: string) => {
+  const response = await fetch(`${directusUrl}/items/events?filter[user_created][_eq]=${userId}&sort=-date_created&fields=*`, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to read user events');
+  }
+
+  const data = await response.json();
+  return data.data;
 };
 
 // Hook personalizado para manejar la autenticación
