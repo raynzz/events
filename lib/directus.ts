@@ -364,7 +364,7 @@ export const uploadFile = async (file: File): Promise<string> => {
 
 // Create a new event
 export const createEvent = async (eventData: {
-  name: string;
+  title: string;
   description: string;
   start_date: string;
   end_date: string;
@@ -373,7 +373,6 @@ export const createEvent = async (eventData: {
   price: number;
   requires_liquor_license: boolean;
   status?: string;
-  document_requirements?: any;
 }) => {
   const response = await fetch(`${directusUrl}/items/events`, {
     method: 'POST',

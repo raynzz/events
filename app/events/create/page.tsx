@@ -64,7 +64,7 @@ export default function CreateEventPage() {
 
       // Map form data to Directus schema - only send fields that exist
       const eventData = {
-        name: formData.title,
+        title: formData.title,
         description: formData.description,
         start_date: formData.startDate,
         end_date: formData.endDate,
