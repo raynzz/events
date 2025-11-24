@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,10 +28,10 @@ interface Event {
   date_created: string;
 }
 
-export default function EventDetailPage({ params }: { params: { id: string } }) {
+export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const id = params.id;
+  const { id } = use(params);
 
   const [event, setEvent] = useState<Event | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
