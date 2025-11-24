@@ -34,7 +34,7 @@ export default function CreateEventPage() {
   const [activeStep, setActiveStep] = useState(1);
   const [previewData, setPreviewData] = useState<EventData | null>(null);
   const [isAddDocumentModalOpen, setIsAddDocumentModalOpen] = useState(false);
-  
+
   const [formData, setFormData] = useState<EventData>({
     title: '',
     description: '',
@@ -101,17 +101,43 @@ export default function CreateEventPage() {
 
   const handleSubmit = async () => {
     try {
-      // Aquí iría la lógica para guardar el evento en la base de datos
-      console.log('Guardando evento:', formData);
-      
-      // Simular guardado
-      setTimeout(() => {
-        router.push('/events');
-      }, 1000);
+      setIsSubmitting(true);
+
+      const { createEvent } = await import('@/lib/directus');
+
+      // Map form data to Directus schema
+      const eventData = {
+        name: formData.title,
+        description: formData.description,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        location: formData.location,
+        capacity: formData.capacity,
+        price: formData.price,
+        requires_liquor_license: formData.requiresLiquorLicense,
+        status: 'draft', // Create as draft, can be published later
+        document_requirements: {
+          required: formData.requiredDocuments,
+          additional: formData.additionalDocuments
+        }
+      };
+
+      const result = await createEvent(eventData);
+
+      // Show success message
+      alert('¡Evento creado exitosamente!');
+
+      // Redirect to event detail page
+      router.push(`/events/${result.data.id}`);
     } catch (error) {
-      console.error('Error al crear evento:', error);
+      console.error('Error creating event:', error);
+      alert(`Error al crear el evento: ${error instanceof Error ? error.message : 'Por favor intenta nuevamente.'}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const steps = [
     { id: 1, name: 'Información Básica' },
@@ -154,22 +180,19 @@ export default function CreateEventPage() {
           <ol className="flex items-center space-x-2 sm:space-x-4">
             {steps.map((step, index) => (
               <li key={step.id} className="flex items-center">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                  activeStep >= step.id 
-                    ? 'bg-black text-white' 
-                    : 'bg-gray-200 text-gray-500'
-                }`}>
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${activeStep >= step.id
+                  ? 'bg-black text-white'
+                  : 'bg-gray-200 text-gray-500'
+                  }`}>
                   {step.id}
                 </div>
-                <span className={`ml-2 text-sm font-medium ${
-                  activeStep >= step.id ? 'text-black' : 'text-gray-500'
-                }`}>
+                <span className={`ml-2 text-sm font-medium ${activeStep >= step.id ? 'text-black' : 'text-gray-500'
+                  }`}>
                   {step.name}
                 </span>
                 {index < steps.length - 1 && (
-                  <div className={`ml-4 sm:ml-8 h-0.5 w-8 sm:w-16 ${
-                    activeStep > step.id ? 'bg-black' : 'bg-gray-200'
-                  }`}></div>
+                  <div className={`ml-4 sm:ml-8 h-0.5 w-8 sm:w-16 ${activeStep > step.id ? 'bg-black' : 'bg-gray-200'
+                    }`}></div>
                 )}
               </li>
             ))}
@@ -180,7 +203,7 @@ export default function CreateEventPage() {
         {activeStep === 1 && (
           <div className="mt-8 bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-black mb-6">Información Básica del Evento</h2>
-            
+
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -336,7 +359,7 @@ export default function CreateEventPage() {
         {activeStep === 2 && (
           <div className="mt-8 bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-black mb-6">Documentos Requeridos</h2>
-            
+
             <div className="space-y-6">
               {/* Documentos Base - Sección informativa clara */}
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
@@ -358,11 +381,10 @@ export default function CreateEventPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {formData.requiredDocuments.map((doc) => (
                     <div key={doc.id} className="flex items-center p-3 bg-white rounded-lg border border-blue-200">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                        doc.type === 'RC' ? 'bg-red-100 text-red-800' :
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${doc.type === 'RC' ? 'bg-red-100 text-red-800' :
                         doc.type === 'AP' ? 'bg-purple-100 text-purple-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
+                          'bg-green-100 text-green-800'
+                        }`}>
                         {doc.type}
                       </span>
                       <div className="ml-3">
@@ -397,11 +419,10 @@ export default function CreateEventPage() {
                       {documentTemplates.filter(doc => doc.type === 'ART').map((doc) => (
                         <div key={doc.id} className="p-4 bg-white rounded-lg border border-orange-200">
                           <div className="flex items-center mb-2">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                              doc.type === 'RC' ? 'bg-red-100 text-red-800' :
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${doc.type === 'RC' ? 'bg-red-100 text-red-800' :
                               doc.type === 'AP' ? 'bg-purple-100 text-purple-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
+                                'bg-green-100 text-green-800'
+                              }`}>
                               {doc.type}
                             </span>
                           </div>
@@ -446,11 +467,10 @@ export default function CreateEventPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center mb-2">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              doc.type === 'RC' ? 'bg-red-100 text-red-800' :
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${doc.type === 'RC' ? 'bg-red-100 text-red-800' :
                               doc.type === 'AP' ? 'bg-purple-100 text-purple-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
+                                'bg-green-100 text-green-800'
+                              }`}>
                               {doc.type}
                             </span>
                           </div>
@@ -469,7 +489,7 @@ export default function CreateEventPage() {
                       </div>
                     </div>
                   ))}
-                  
+
                   {/* Botón outline para agregar documento personalizado */}
                   <div
                     className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors cursor-pointer bg-gray-50"
@@ -496,11 +516,10 @@ export default function CreateEventPage() {
                     {formData.additionalDocuments.map((doc) => (
                       <div key={doc.id} className="flex items-start justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                         <div className="flex items-start">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            doc.type === 'RC' ? 'bg-red-100 text-red-800' :
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${doc.type === 'RC' ? 'bg-red-100 text-red-800' :
                             doc.type === 'AP' ? 'bg-purple-100 text-purple-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
+                              'bg-green-100 text-green-800'
+                            }`}>
                             {doc.type}
                           </span>
                           <div className="ml-3">
@@ -542,7 +561,7 @@ export default function CreateEventPage() {
         {activeStep === 3 && previewData && (
           <div className="mt-8 bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-black mb-6">Vista Previa del Evento</h2>
-            
+
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h3 className="text-2xl font-bold text-black">{previewData.title}</h3>
@@ -627,9 +646,10 @@ export default function CreateEventPage() {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Crear Evento
+                  {isSubmitting ? 'Creando evento...' : 'Crear Evento'}
                 </button>
               </div>
             </div>

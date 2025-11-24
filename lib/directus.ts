@@ -362,6 +362,36 @@ export const uploadFile = async (file: File): Promise<string> => {
   return data.data.id; // Return the file ID
 };
 
+// Create a new event
+export const createEvent = async (eventData: {
+  name: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  capacity: number;
+  price: number;
+  requires_liquor_license: boolean;
+  status?: string;
+  document_requirements?: any;
+}) => {
+  const response = await fetch(`${directusUrl}/items/events`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      ...eventData,
+      status: eventData.status || 'draft'
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to create event');
+  }
+
+  return response.json();
+};
+
 // Hook personalizado para manejar la autenticación
 export const useAuth = () => {
   // La lógica de autenticación se basa en si existe el token en el almacenamiento local
