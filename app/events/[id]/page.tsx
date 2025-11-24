@@ -48,102 +48,59 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
   const [selectedCredential, setSelectedCredential] = useState<any>(null);
   const [isCredentialModalOpen, setIsCredentialModalOpen] = useState(false);
+  const [providers, setProviders] = useState<any[]>([]); // New state for providers
   const id = use(params).id;
 
-  // Mock data - in a real app, this would come from an API
+  // Fetch event and providers from Directus
   useEffect(() => {
-    const baseMockEvent: Omit<Event, 'requiredDocuments' | 'additionalDocuments'> = {
-      id: id,
-      title: 'Conferencia de Tecnología 2024',
-      description: 'El mayor evento de tecnología del año con ponentes internacionales de renombre. Este evento reunirá a los líderes de la industria, emprendedores e innovadores para compartir conocimientos sobre las últimas tendencias en IA, blockchain, cloud computing y desarrollo web moderno. Incluye sesiones prácticas, networking y exhibición de tecnologías emergentes.',
-      startDate: '2024-03-15T09:00:00',
-      endDate: '2024-03-15T18:00:00',
-      location: 'Centro de Convenciones, Buenos Aires',
-      capacity: 500,
-      registered: 342,
-      price: 250,
-      category: 'conferencia',
-      requiresLiquorLicense: false,
-      status: 'published',
-      createdAt: '2024-02-01T10:00:00',
-      updatedAt: '2024-02-10T14:30:00',
-      organizer: {
-        name: 'Tech Events SRL',
-        email: 'events@techevents.com'
+    const fetchEventData = async () => {
+      if (!id) return;
+
+      try {
+        const { readItem, readItems } = await import('@/lib/directus');
+
+        // 1. Fetch Event Details
+        const eventData = await readItem('events', id, {
+          fields: ['*']
+        });
+
+        if (eventData) {
+          // 2. Fetch Providers
+          const providersData = await readItems('providers', {
+            fields: ['*', 'team_members.*']
+          });
+          setProviders(providersData);
+
+          setEvent({
+            id: eventData.id,
+            title: eventData.name,
+            description: eventData.description,
+            startDate: eventData.start_date,
+            endDate: eventData.end_date,
+            location: eventData.location,
+            capacity: eventData.capacity,
+            registered: 0,
+            price: eventData.price,
+            category: 'conferencia',
+            requiresLiquorLicense: eventData.requires_liquor_license,
+            status: eventData.status,
+            createdAt: eventData.date_created,
+            updatedAt: eventData.date_updated,
+            organizer: {
+              name: eventData.organizer_name || 'Organizador',
+              email: eventData.organizer_email || 'email@example.com'
+            },
+            requiredDocuments: [],
+            additionalDocuments: []
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching event data:', error);
+        setEvent(null);
       }
     };
 
-    // Simulate loading and different events based on ID
-    setTimeout(() => {
-      if (id === '1') {
-        setEvent({
-          ...baseMockEvent,
-          requiredDocuments: [
-            { id: 'rc1', type: 'RC', name: 'Registro de Comercio', required: true, description: 'Registro legal del establecimiento', status: 'verified' },
-            { id: 'ap1', type: 'AP', name: 'Autorización de Policía', required: true, description: 'Permiso de autoridades locales', status: 'pending' },
-          ],
-          additionalDocuments: [
-            { id: 'art1', type: 'ART', name: 'ART - Responsabilidad del Trabajo', required: false, description: 'Seguro de accidentes de trabajo', status: 'pending' },
-          ],
-        });
-      } else if (id === '2') {
-        setEvent({
-          ...baseMockEvent,
-          title: 'Workshop de React Avanzado',
-          description: 'Taller práctico de React con hooks, context API y nuevas características de React 18.',
-          location: 'Coworking Palermo, Buenos Aires',
-          capacity: 30,
-          registered: 28,
-          price: 80,
-          category: 'workshop',
-          requiredDocuments: [
-            { id: 'rc1', type: 'RC', name: 'Registro de Comercio', required: true, description: 'Registro legal del establecimiento', status: 'verified' },
-          ],
-          additionalDocuments: [],
-        });
-      } else if (id === '3') {
-        setEvent({
-          ...baseMockEvent,
-          title: 'Fiesta de Año Nuevo',
-          description: 'Celebración de fin de año con música en vivo, buffet, open bar y sorpresas.',
-          location: 'Salón de Eventos, Córdoba',
-          capacity: 200,
-          registered: 156,
-          price: 150,
-          category: 'social',
-          requiresLiquorLicense: true,
-          requiredDocuments: [
-            { id: 'rc1', type: 'RC', name: 'Registro de Comercio', required: true, description: 'Registro legal del establecimiento', status: 'verified' },
-            { id: 'ap1', type: 'AP', name: 'Autorización de Policía', required: true, description: 'Permiso de autoridades locales', status: 'verified' },
-            { id: 'art1', type: 'ART', name: 'ART - Responsabilidad del Trabajo', required: true, description: 'Seguro de accidentes de trabajo', status: 'verified' },
-            { id: 'art2', type: 'ART', name: 'ART - Responsabilidad Civil', required: true, description: 'Seguro de responsabilidad civil', status: 'pending' },
-          ],
-          additionalDocuments: [],
-        });
-      } else if (id === '6') {
-        setEvent({
-          ...baseMockEvent,
-          title: 'Feria gastronómica italiana',
-          description: 'Celebración de la auténtica cocina italiana con chefs internacionales, vinos selectos y música en vivo. Incluye demostraciones de cocina, degustaciones de pasta artesanal, pizzas de horno de leña y postres típicos.',
-          location: 'Usina del Arte, Buenos Aires',
-          capacity: 1200,
-          registered: 892,
-          price: 0,
-          category: 'feria',
-          requiresLiquorLicense: true,
-          requiredDocuments: [
-            { id: 'rc1', type: 'RC', name: 'Registro de Comercio', required: true, description: 'Registro legal del establecimiento', status: 'verified' },
-            { id: 'ap1', type: 'AP', name: 'Autorización de Policía', required: true, description: 'Permiso de autoridades locales', status: 'verified' },
-            { id: 'art1', type: 'ART', name: 'ART - Responsabilidad del Trabajo', required: true, description: 'Seguro de accidentes de trabajo', status: 'pending' },
-            { id: 'art2', type: 'ART', name: 'ART - Responsabilidad Civil', required: true, description: 'Seguro de responsabilidad civil', status: 'pending' },
-            { id: 'ss1', type: 'SS', name: 'Servicios Sanitarios', required: true, description: 'Permiso de servicios e higiene', status: 'verified' },
-          ],
-          additionalDocuments: [],
-        });
-      } else {
-        setEvent(null);
-      }
-    }, 500);
+    fetchEventData();
   }, [id]);
 
   const getStatusColor = (status: Event['status']) => {
@@ -401,31 +358,28 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             <nav className="flex space-x-8 px-6">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'overview'
-                    ? 'border-black text-black'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 Resumen
               </button>
               <button
                 onClick={() => setActiveTab('documents')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'documents'
-                    ? 'border-black text-black'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'documents'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 Documentos
               </button>
               <button
                 onClick={() => setActiveTab('providers')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'providers'
-                    ? 'border-black text-black'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'providers'
+                  ? 'border-black text-black'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 Proveedores
               </button>
@@ -481,7 +435,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-medium text-black mb-4">Documentos Requeridos</h3>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-medium text-black mb-3">Documentos Obligatorios</h4>
@@ -489,12 +443,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         {event.requiredDocuments.map((doc) => (
                           <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                             <div className="flex items-center space-x-3">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                doc.type === 'RC' ? 'bg-red-100 text-red-800' :
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${doc.type === 'RC' ? 'bg-red-100 text-red-800' :
                                 doc.type === 'AP' ? 'bg-purple-100 text-purple-800' :
-                                doc.type === 'ART' ? 'bg-green-100 text-green-800' :
-                                'bg-blue-100 text-blue-800'
-                              }`}>
+                                  doc.type === 'ART' ? 'bg-green-100 text-green-800' :
+                                    'bg-blue-100 text-blue-800'
+                                }`}>
                                 {doc.type}
                               </span>
                               <div>
@@ -524,12 +477,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                           {event.additionalDocuments.map((doc) => (
                             <div key={doc.id} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
                               <div className="flex items-center space-x-3">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  doc.type === 'RC' ? 'bg-red-100 text-red-800' :
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${doc.type === 'RC' ? 'bg-red-100 text-red-800' :
                                   doc.type === 'AP' ? 'bg-purple-100 text-purple-800' :
-                                  doc.type === 'ART' ? 'bg-green-100 text-green-800' :
-                                  'bg-blue-100 text-blue-800'
-                                }`}>
+                                    doc.type === 'ART' ? 'bg-green-100 text-green-800' :
+                                      'bg-blue-100 text-blue-800'
+                                  }`}>
                                   {doc.type}
                                 </span>
                                 <div>
@@ -576,7 +528,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     </button>
                   </Link>
                 </div>
-                
+
                 <div className="space-y-6">
                   {/* Provider Summary */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -600,229 +552,22 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
                   {/* Provider List */}
                   <div className="space-y-4">
-                    {/* Provider 1: Branca */}
-                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                      <div
-                        className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => setExpandedProvider(expandedProvider === 'branca' ? null : 'branca')}
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h4 className="text-lg font-bold text-black mb-2">Branca</h4>
-                            <p className="text-sm text-gray-600">Proveedor de bebidas alcohólicas</p>
-                            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                              <span>📞 contact@branca.com</span>
-                              <span>📱 +54 9 11 2345-6789</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button className="px-3 py-1 text-sm text-black bg-gray-100 rounded-md hover:bg-gray-200">
-                              Editar
-                            </button>
-                            <button className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700">
-                              Eliminar
-                            </button>
-                            <button className="px-2 py-1 text-sm text-black">
-                              {expandedProvider === 'branca' ? '▲' : '▼'}
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <div className="flex justify-between text-sm text-gray-600 mb-2">
-                            <span>Progreso de documentos</span>
-                            <span>75% (3/4)</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="bg-green-600 h-2 rounded-full" style={{ width: '75%' }}></div>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <div className="flex justify-between text-sm text-gray-600 mb-2">
-                            <span>Asistentes</span>
-                            <span>3 asistentes</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {expandedProvider === 'branca' && (
-                        <div className="border-t border-gray-200 p-6 bg-gray-50">
-                          <h5 className="font-medium text-black mb-4">Asistentes de Branca</h5>
-                          <div className="space-y-3">
-                            {Array.from({ length: 3 }, (_, i) => (
-                              <div key={i} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                                    <span className="text-white text-xs font-bold">
-                                      {String.fromCharCode(65 + i)}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <div className="font-medium text-sm text-black">Asistente {i + 1}</div>
-                                    <div className="text-xs text-gray-600">asistente{i + 1}@branca.com</div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Confirmado
-                                  </span>
-                                  <button
-                                    onClick={() => handlePrintCredential({
-                                      id: `assist-${i + 1}`,
-                                      name: `Asistente ${i + 1}`,
-                                      email: `asistente${i + 1}@branca.com`,
-                                      position: 'Asistente'
-                                    }, 'Branca')}
-                                    className="px-2 py-1 text-xs text-white bg-black rounded-md hover:bg-gray-800"
-                                  >
-                                    🖨️ Imprimir
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="space-y-2 p-6 border-t border-gray-200">
-                        <h5 className="font-medium text-black text-sm">Documentos requeridos:</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          <div className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-200">
-                            <span className="text-sm text-black">RC - Registro de Comercio</span>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Verificado</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-200">
-                            <span className="text-sm text-black">AP - Autorización Policía</span>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Verificado</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-200">
-                            <span className="text-sm text-black">SS - Servicios Sanitarios</span>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Verificado</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-yellow-50 rounded border border-yellow-200">
-                            <span className="text-sm text-black">ART - Responsabilidad Civil</span>
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pendiente</span>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-between p-2 bg-yellow-50 rounded border border-yellow-200">
+                      <span className="text-sm text-black">ART - Responsabilidad del Trabajo</span>
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pendiente</span>
                     </div>
-
-                    {/* Provider 2: Catering Italiano */}
-                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                      <div
-                        className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => setExpandedProvider(expandedProvider === 'catering' ? null : 'catering')}
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h4 className="text-lg font-bold text-black mb-2">Catering Italiano</h4>
-                            <p className="text-sm text-gray-600">Servicio de catering y comida italiana</p>
-                            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                              <span>📞 info@cateringitaliano.com</span>
-                              <span>📱 +54 9 11 3456-7890</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button className="px-3 py-1 text-sm text-black bg-gray-100 rounded-md hover:bg-gray-200">
-                              Editar
-                            </button>
-                            <button className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700">
-                              Eliminar
-                            </button>
-                            <button className="px-2 py-1 text-sm text-black">
-                              {expandedProvider === 'catering' ? '▲' : '▼'}
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <div className="flex justify-between text-sm text-gray-600 mb-2">
-                            <span>Progreso de documentos</span>
-                            <span>50% (2/4)</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="bg-blue-600 h-2 rounded-full" style={{ width: '50%' }}></div>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <div className="flex justify-between text-sm text-gray-600 mb-2">
-                            <span>Asistentes</span>
-                            <span>4 asistentes</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {expandedProvider === 'catering' && (
-                        <div className="border-t border-gray-200 p-6 bg-gray-50">
-                          <h5 className="font-medium text-black mb-4">Asistentes de Catering Italiano</h5>
-                          <div className="space-y-3">
-                            {Array.from({ length: 4 }, (_, i) => (
-                              <div key={i} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-                                    <span className="text-white text-xs font-bold">
-                                      {String.fromCharCode(68 + i)}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <div className="font-medium text-sm text-black">Asistente {i + 1}</div>
-                                    <div className="text-xs text-gray-600">asistente{i + 1}@cateringitaliano.com</div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Confirmado
-                                  </span>
-                                  <button
-                                    onClick={() => handlePrintCredential({
-                                      id: `assist-${i + 4}`,
-                                      name: `Asistente ${i + 1}`,
-                                      email: `asistente${i + 1}@cateringitaliano.com`,
-                                      position: 'Asistente'
-                                    }, 'Catering Italiano')}
-                                    className="px-2 py-1 text-xs text-white bg-black rounded-md hover:bg-gray-800"
-                                  >
-                                    🖨️ Imprimir
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="space-y-2 p-6 border-t border-gray-200">
-                        <h5 className="font-medium text-black text-sm">Documentos requeridos:</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          <div className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-200">
-                            <span className="text-sm text-black">RC - Registro de Comercio</span>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Verificado</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-200">
-                            <span className="text-sm text-black">AP - Autorización Policía</span>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Verificado</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-yellow-50 rounded border border-yellow-200">
-                            <span className="text-sm text-black">ART - Responsabilidad del Trabajo</span>
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pendiente</span>
-                          </div>
-                          <div className="flex items-center justify-between p-2 bg-yellow-50 rounded border border-yellow-200">
-                            <span className="text-sm text-black">SS - Servicios Sanitarios</span>
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pendiente</span>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-between p-2 bg-yellow-50 rounded border border-yellow-200">
+                      <span className="text-sm text-black">SS - Servicios Sanitarios</span>
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pendiente</span>
                     </div>
                   </div>
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </main>
+
 
       {/* Credential Preview Modal */}
       <CredentialPreviewModal

@@ -24,101 +24,46 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'draft'>('all');
 
-  // Mock data for demonstration
+  // Fetch events from Directus
   useEffect(() => {
-    const mockEvents: Event[] = [
-      {
-        id: '1',
-        title: 'Conferencia de Tecnología 2024',
-        description: 'El mayor evento de tecnología del año con ponentes internacionales.',
-        startDate: '2024-03-15T09:00:00',
-        endDate: '2024-03-15T18:00:00',
-        location: 'Centro de Convenciones, Buenos Aires',
-        capacity: 500,
-        price: 250,
-        category: 'conferencia',
-        requiresLiquorLicense: false,
-        status: 'published',
-        createdAt: '2024-02-01T10:00:00'
-      },
-      {
-        id: '2',
-        title: 'Workshop de React Avanzado',
-        description: 'Taller práctico de React con hooks y context API.',
-        startDate: '2024-03-20T14:00:00',
-        endDate: '2024-03-20T18:00:00',
-        location: 'Coworking Palermo, Buenos Aires',
-        capacity: 30,
-        price: 80,
-        category: 'workshop',
-        requiresLiquorLicense: false,
-        status: 'published',
-        createdAt: '2024-02-05T11:00:00'
-      },
-      {
-        id: '3',
-        title: 'Fiesta de Año Nuevo',
-        description: 'Celebración de fin de año con música, comida y bebidas.',
-        startDate: '2024-12-31T22:00:00',
-        endDate: '2025-01-01T02:00:00',
-        location: 'Salón de Eventos, Córdoba',
-        capacity: 200,
-        price: 150,
-        category: 'social',
-        requiresLiquorLicense: true,
-        status: 'draft',
-        createdAt: '2024-02-10T09:00:00'
-      },
-      {
-        id: '4',
-        title: 'Meetup de Desarrollo Web',
-        description: 'Encuentro mensual de desarrolladores web para compartir conocimientos.',
-        startDate: '2024-01-15T19:00:00',
-        endDate: '2024-01-15T21:00:00',
-        location: 'Espacio Coworking, Rosario',
-        capacity: 50,
-        price: 0,
-        category: 'networking',
-        requiresLiquorLicense: false,
-        status: 'completed',
-        createdAt: '2023-12-15T10:00:00'
-      },
-      {
-        id: '5',
-        title: 'Concierto de Jazz',
-        description: 'Noche de jazz con artistas locales e internacionales.',
-        startDate: '2024-04-10T20:00:00',
-        endDate: '2024-04-10T23:00:00',
-        location: 'Teatro Municipal, Mendoza',
-        capacity: 300,
-        price: 120,
-        category: 'cultural',
-        requiresLiquorLicense: true,
-        status: 'published',
-        createdAt: '2024-02-12T14:00:00'
-      },
-      {
-        id: '6',
-        title: 'Feria gastronómica italiana',
-        description: 'Celebración de la auténtica cocina italiana con chefs internacionales, vinos selectos y música en vivo. Incluye demostraciones de cocina, degustaciones de pasta artesanal, pizzas de horno de leña y postres típicos.',
-        startDate: '2024-05-15T18:00:00',
-        endDate: '2024-05-18T23:00:00',
-        location: 'Usina del Arte, Buenos Aires',
-        capacity: 1200,
-        price: 0,
-        category: 'feria',
-        requiresLiquorLicense: true,
-        status: 'published',
-        createdAt: '2024-02-20T10:00:00'
+    const fetchEvents = async () => {
+      try {
+        // Import dynamically to avoid server-side issues if any, though readItems is safe
+        const { readItems } = await import('@/lib/directus');
+
+        const data = await readItems('events', {
+          sort: ['-date_created'],
+          fields: ['*']
+        });
+
+        const mappedEvents: Event[] = data.map((item: any) => ({
+          id: item.id,
+          title: item.name,
+          description: item.description,
+          startDate: item.start_date,
+          endDate: item.end_date,
+          location: item.location,
+          capacity: item.capacity,
+          price: item.price,
+          category: 'conferencia', // Default or map if category field exists
+          requiresLiquorLicense: item.requires_liquor_license,
+          status: item.status,
+          createdAt: item.date_created
+        }));
+
+        setEvents(mappedEvents);
+      } catch (error) {
+        console.error('Error fetching events:', error);
       }
-    ];
-    setEvents(mockEvents);
+    };
+
+    fetchEvents();
   }, []);
 
   const filteredEvents = events.filter(event => {
     const now = new Date();
     const eventStart = new Date(event.startDate);
-    
+
     switch (filter) {
       case 'upcoming':
         return eventStart > now && event.status === 'published';
@@ -225,7 +170,7 @@ export default function EventsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -241,7 +186,7 @@ export default function EventsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -257,7 +202,7 @@ export default function EventsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -280,41 +225,37 @@ export default function EventsPage() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 text-sm font-medium rounded-md ${
-                filter === 'all' 
-                  ? 'bg-black text-white' 
+              className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'all'
+                  ? 'bg-black text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Todos
             </button>
             <button
               onClick={() => setFilter('upcoming')}
-              className={`px-4 py-2 text-sm font-medium rounded-md ${
-                filter === 'upcoming' 
-                  ? 'bg-black text-white' 
+              className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'upcoming'
+                  ? 'bg-black text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Próximos
             </button>
             <button
               onClick={() => setFilter('past')}
-              className={`px-4 py-2 text-sm font-medium rounded-md ${
-                filter === 'past' 
-                  ? 'bg-black text-white' 
+              className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'past'
+                  ? 'bg-black text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Pasados
             </button>
             <button
               onClick={() => setFilter('draft')}
-              className={`px-4 py-2 text-sm font-medium rounded-md ${
-                filter === 'draft' 
-                  ? 'bg-black text-white' 
+              className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'draft'
+                  ? 'bg-black text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Borradores
             </button>
@@ -328,8 +269,8 @@ export default function EventsPage() {
               <div className="text-6xl mb-4">📅</div>
               <h3 className="text-lg font-medium text-black mb-2">No hay eventos</h3>
               <p className="text-gray-600 mb-6">
-                {filter === 'draft' 
-                  ? 'No tienes eventos guardados como borradores.' 
+                {filter === 'draft'
+                  ? 'No tienes eventos guardados como borradores.'
                   : 'No se encontraron eventos con los filtros seleccionados.'}
               </p>
               <Link
@@ -356,9 +297,9 @@ export default function EventsPage() {
                           </span>
                         )}
                       </div>
-                      
+
                       <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
                         <div>
                           <span className="font-medium">Fecha:</span>
@@ -377,7 +318,7 @@ export default function EventsPage() {
                           <div>{event.price > 0 ? `$${event.price}` : 'Gratis'}</div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-4 text-sm">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                           {getCategoryText(event.category)}
@@ -387,7 +328,7 @@ export default function EventsPage() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="ml-6 flex flex-col space-y-2">
                       <Link
                         href={`/events/${event.id}`}

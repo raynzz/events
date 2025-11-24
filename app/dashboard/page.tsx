@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -27,6 +27,40 @@ export default function DashboardPage() {
 
   // Determinar si es modo invitado o usuario autenticado
   const isGuestMode = !user;
+
+
+  // Fetch stats
+  const [stats, setStats] = useState({
+    totalEvents: 0,
+    upcomingEvents: 0,
+    totalAttendees: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { readItems } = await import('@/lib/directus');
+        const events = await readItems('events', {
+          fields: ['id', 'start_date', 'status']
+        });
+
+        const now = new Date();
+        const upcoming = events.filter((e: any) => new Date(e.start_date) > now).length;
+
+        setStats({
+          totalEvents: events.length,
+          upcomingEvents: upcoming,
+          totalAttendees: 0 // We don't have this data yet
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -275,11 +309,11 @@ export default function DashboardPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Eventos este mes</span>
-                      <span className="text-sm font-medium text-black">5</span>
+                      <span className="text-sm font-medium text-black">{stats.totalEvents}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Asistentes totales</span>
-                      <span className="text-sm font-medium text-black">156</span>
+                      <span className="text-sm font-medium text-black">{stats.totalAttendees}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Tasa de asistencia</span>
@@ -287,7 +321,9 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Próximo evento</span>
-                      <span className="text-sm font-medium text-black">Hoy</span>
+                      <span className="text-sm font-medium text-black">
+                        {stats.upcomingEvents > 0 ? `${stats.upcomingEvents} próximos` : 'Ninguno'}
+                      </span>
                     </div>
                   </div>
                 </div>
