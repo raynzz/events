@@ -402,6 +402,92 @@ export const readUserEvents = async (userId: string) => {
   return data.data;
 };
 
+// ============================================
+// PROVIDERS MANAGEMENT
+// ============================================
+
+// Create a new provider
+export const createProvider = async (providerData: {
+  name: string;
+  description?: string;
+  email?: string;
+  phone?: string;
+  contact_name?: string;
+  evento: string; // Event ID
+  status?: string;
+}) => {
+  const response = await fetch(`${directusUrl}/items/proveedores`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      ...providerData,
+      status: providerData.status || 'draft'
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to create provider');
+  }
+
+  return response.json();
+};
+
+// Read providers for a specific event
+export const readEventProviders = async (eventId: string) => {
+  const response = await fetch(
+    `${directusUrl}/items/proveedores?filter[evento][_eq]=${eventId}&sort=sort,date_created&fields=*`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to read event providers');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Update a provider
+export const updateProvider = async (id: string, providerData: Partial<{
+  name: string;
+  description: string;
+  email: string;
+  phone: string;
+  contact_name: string;
+  status: string;
+}>) => {
+  const response = await fetch(`${directusUrl}/items/proveedores/${id}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(providerData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to update provider');
+  }
+
+  return response.json();
+};
+
+// Delete a provider
+export const deleteProvider = async (id: string) => {
+  const response = await fetch(`${directusUrl}/items/proveedores/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to delete provider');
+  }
+
+  return response.json();
+};
+
 // Hook personalizado para manejar la autenticación
 export const useAuth = () => {
   // La lógica de autenticación se basa en si existe el token en el almacenamiento local
