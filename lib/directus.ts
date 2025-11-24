@@ -416,38 +416,74 @@ export const createProvider = async (providerData: {
   evento: string; // Event ID
   status?: string;
 }) => {
-  const response = await fetch(`${directusUrl}/items/proveedores`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify({
-      ...providerData,
-      status: providerData.status || 'draft'
-    }),
-  });
+  // Intentar diferentes nombres de campo de relación
+  const possibleFields = ['evento', 'event', 'events_id', 'event_id'];
+  let lastError = null;
+  
+  for (const field of possibleFields) {
+    try {
+      console.log(`Trying to create provider with field: ${field}`);
+      const response = await fetch(`${directusUrl}/items/proveedores`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          ...providerData,
+          [field]: providerData.evento, // Usar el campo correcto
+          status: providerData.status || 'draft'
+        }),
+      });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.errors?.[0]?.message || 'Failed to create provider');
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`Provider created successfully with field: ${field}`);
+        return data;
+      } else {
+        const error = await response.json();
+        lastError = error;
+        console.log(`Error with field ${field}:`, error);
+      }
+    } catch (error) {
+      console.log(`Exception with field ${field}:`, error);
+      lastError = error;
+    }
   }
-
-  return response.json();
+  
+  // Si ningún campo funcionó, lanzar el último error
+  throw new Error(`Failed to create provider. Tried fields: ${possibleFields.join(', ')}. Last error: ${lastError?.errors?.[0]?.message || lastError}`);
 };
 
 // Read providers for a specific event
 export const readEventProviders = async (eventId: string) => {
-  const response = await fetch(
-    `${directusUrl}/items/proveedores?filter[evento][_eq]=${eventId}&sort=sort,date_created&fields=*`,
-    {
-      headers: getHeaders(),
+  // Intentar diferentes nombres de campo de relación
+  const possibleFields = ['evento', 'event', 'events_id', 'event_id'];
+  
+  for (const field of possibleFields) {
+    try {
+      console.log(`Trying to fetch providers with field: ${field}`);
+      const response = await fetch(
+        `${directusUrl}/items/proveedores?filter[${field}][_eq]=${eventId}&sort=sort,date_created&fields=*`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const data = await response.json();
+      if (data.data && data.data.length > 0) {
+        console.log(`Found providers using field: ${field}`);
+        return data.data;
+      }
+    } catch (error) {
+      console.log(`Error with field ${field}:`, error);
+      continue;
     }
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to read event providers');
   }
-
-  const data = await response.json();
-  return data.data;
+  
+  // Si ningún campo funcionó, lanzar un error
+  throw new Error(`Failed to read event providers. Tried fields: ${possibleFields.join(', ')}`);
 };
 
 // Update a provider

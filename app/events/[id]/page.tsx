@@ -33,6 +33,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const { user, loading } = useAuth();
   const router = useRouter();
   const { id } = use(params);
+  
+  // Debug: Mostrar el ID recibido
+  console.log('EventDetailPage - Received ID:', id);
+  console.log('EventDetailPage - ID type:', typeof id);
 
   const [event, setEvent] = useState<Event | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -52,10 +56,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     if (!id) return;
     const fetchEvent = async () => {
       try {
+        console.log('Fetching event with ID:', id);
         const data = await readItem('eventos', id);
+        console.log('Event data received:', data);
         setEvent(data);
       } catch (error) {
         console.error('Error fetching event:', error);
+        // Mostrar más detalles del error
+        console.error('Event ID:', id);
+        console.error('Full error:', error);
       }
     };
     fetchEvent();
@@ -66,10 +75,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     if (!id) return;
     setIsLoadingProviders(true);
     try {
+      console.log('Fetching providers for event ID:', id);
       const data = await readEventProviders(id);
+      console.log('Providers data received:', data);
       setProviders(data || []);
     } catch (error) {
       console.error('Error fetching providers:', error);
+      console.error('Event ID:', id);
+      console.error('Full error:', error);
       setProviders([]);
     } finally {
       setIsLoadingProviders(false);
