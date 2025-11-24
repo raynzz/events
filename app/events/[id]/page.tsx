@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { use } from 'react';
+import { readItem, readEventProviders, createProvider, updateProvider, deleteProvider } from '@/lib/directus';
 
 interface Provider {
   id: string;
@@ -28,9 +28,11 @@ interface Event {
   date_created: string;
 }
 
-export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EventDetailPage({ params }: { params: { id: string } }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const id = params.id;
+
   const [event, setEvent] = useState<Event | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [isLoadingProviders, setIsLoadingProviders] = useState(false);
@@ -43,39 +45,27 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     phone: '',
     description: ''
   });
-  const id = use(params).id;
 
   // Fetch event details
   useEffect(() => {
     const fetchEvent = async () => {
       if (!id) return;
-
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/items/eventos/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('directus_access_token')}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setEvent(data.data);
-        }
+        const data = await readItem('eventos', id, { fields: ['*'] });
+        setEvent(data);
       } catch (error) {
-        console.error('Error fetching event:', error);
+        console.error('Error fetching event data:', error);
+        setEvent(null);
       }
     };
-
     fetchEvent();
   }, [id]);
 
-  // Fetch providers
+  // Fetch providers for this event
   const fetchProviders = async () => {
     if (!id) return;
-
     setIsLoadingProviders(true);
     try {
-      const { readEventProviders } = await import('@/lib/directus');
       const data = await readEventProviders(id);
       setProviders(data || []);
     } catch (error) {
@@ -92,25 +82,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleSubmitProvider = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
-      const { createProvider, updateProvider } = await import('@/lib/directus');
-
       if (editingProvider) {
-        // Update existing provider
         await updateProvider(editingProvider.id, formData);
         alert('Proveedor actualizado exitosamente');
       } else {
-        // Create new provider
-        await createProvider({
-          ...formData,
-          evento: id,
-          status: 'draft'
-        });
+        await createProvider({ ...formData, evento: id, status: 'draft' });
         alert('Proveedor creado exitosamente');
       }
-
-      // Reset form and refresh list
       setFormData({ name: '', contact_name: '', email: '', phone: '', description: '' });
       setShowProviderForm(false);
       setEditingProvider(null);
@@ -135,9 +114,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleDeleteProvider = async (providerId: string) => {
     if (!confirm('¿Estás seguro de eliminar este proveedor?')) return;
-
     try {
-      const { deleteProvider } = await import('@/lib/directus');
       await deleteProvider(providerId);
       alert('Proveedor eliminado exitosamente');
       fetchProviders();
@@ -203,10 +180,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             <div className="text-6xl mb-4">❌</div>
             <h2 className="text-2xl font-bold text-black mb-2">Evento no encontrado</h2>
             <p className="text-gray-600 mb-6">El evento que buscas no existe o no tienes permiso para verlo.</p>
-            <Link
-              href="/events"
-              className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
-            >
+            <Link href="/events" className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800">
               Volver a la lista de eventos
             </Link>
           </div>
@@ -241,7 +215,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         <div className="bg-white rounded-lg shadow border border-gray-200 p-8 mb-8">
           <h1 className="text-3xl font-bold text-black mb-4">{event.title}</h1>
           <p className="text-gray-600 text-lg mb-6">{event.description}</p>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <span className="font-medium text-black">Fecha de Inicio:</span>
@@ -284,70 +257,54 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               <h3 className="text-lg font-medium text-black mb-4">
                 {editingProvider ? 'Editar Proveedor' : 'Nuevo Proveedor'}
               </h3>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre del Proveedor *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Proveedor *</label>
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                     required
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre del Contacto/Representante
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Contacto/Representante</label>
                   <input
                     type="text"
                     value={formData.contact_name}
-                    onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                    onChange={e => setFormData({ ...formData, contact_name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email de Contacto
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email de Contacto</label>
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teléfono
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
                   <input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
               </div>
-
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descripción del Servicio
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Descripción del Servicio</label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
-
               <div className="mt-6 flex justify-end space-x-3">
                 <button
                   type="button"
@@ -384,7 +341,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           ) : (
             <div className="space-y-4">
-              {providers.map((provider) => (
+              {providers.map(provider => (
                 <div key={provider.id} className="p-6 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -408,11 +365,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                       </button>
                     </div>
                   </div>
-
-                  {provider.description && (
-                    <p className="text-gray-600 mb-4">{provider.description}</p>
-                  )}
-
+                  {provider.description && <p className="text-gray-600 mb-4">{provider.description}</p>}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     {provider.contact_name && (
                       <div>
