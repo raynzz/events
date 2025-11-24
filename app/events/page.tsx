@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import EventStatusSelector from '@/components/EventStatusSelector';
 
 interface Event {
   id: string;
@@ -53,6 +54,30 @@ export default function EventsPage() {
 
     fetchEvents();
   }, [user]);
+
+  // Función para refrescar eventos (se puede llamar cuando se cambie el estado)
+  const refreshEvents = async () => {
+    try {
+      const { readUserEvents } = await import('@/lib/directus');
+      const data = await readUserEvents(user!.id);
+
+      const mappedEvents: Event[] = data.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        startDate: item.start_date,
+        endDate: item.end_date,
+        location: item.location,
+        status: item.status,
+        createdAt: item.date_created
+      }));
+
+      setEvents(mappedEvents);
+      console.log('Events refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing events:', error);
+    }
+  };
 
   const filteredEvents = events.filter(event => {
     const now = new Date();
@@ -293,11 +318,22 @@ export default function EventsPage() {
                       <div className="text-sm text-gray-500">
                         Creado el {new Date(event.createdAt).toLocaleDateString('es-AR')}
                       </div>
+                      
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <EventStatusSelector
+                          eventId={event.id}
+                          currentStatus={event.status}
+                          onStatusChange={(newStatus) => {
+                            console.log(`Event ${event.id} status changed to ${newStatus}`);
+                          }}
+                          onRefresh={refreshEvents}
+                        />
+                      </div>
                     </div>
 
                     <div className="ml-6 flex flex-col space-y-2">
                       <Link
-                        href={`/events/${event.id}`}
+                        href={`/events/${event.id}/temp-detail`}
                         className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
                       >
                         Ver Detalles
