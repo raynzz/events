@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { use } from 'react';
 import EventStatusSelector from '@/components/EventStatusSelector';
+import { Integrante } from '@/lib/directus';
 
 interface Event {
   id: string;
@@ -48,6 +49,19 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
     email: '',
     phone: '',
     description: '',
+  });
+
+  // Estados para integrantes
+  const [integrantes, setIntegrantes] = useState<Integrante[]>([]);
+  const [isLoadingIntegrantes, setIsLoadingIntegrantes] = useState(false);
+  const [showIntegranteForm, setShowIntegranteForm] = useState(false);
+  const [editingIntegrante, setEditingIntegrante] = useState<Integrante | null>(null);
+  const [integranteForm, setIntegranteForm] = useState({
+    nombre: '',
+    apellido: '',
+    documento: '',
+    fecha_nacimiento: '',
+    proveedor: '',
   });
 
   // Buscar el evento en la lista de eventos del usuario
@@ -142,13 +156,26 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
     if (!id) return;
     setIsLoadingProviders(true);
     try {
-      console.log('Fetching providers for event ID:', id);
+      console.log('🔥 Fetching providers for event ID:', id);
+      console.log('🔥 Event ID type:', typeof id);
+      
       const { readEventProviders } = await import('@/lib/directus');
+      
+      console.log('🔥 Calling readEventProviders...');
       const data = await readEventProviders(id);
-      console.log('Providers data received:', data);
-      setProviders(data || []);
+      console.log('🔥 Raw providers data received:', data);
+      console.log('🔥 Providers data type:', typeof data);
+      console.log('🔥 Providers is array:', Array.isArray(data));
+      console.log('🔥 Providers length:', data?.length);
+      
+      // Si data es null o undefined, usar array vacío
+      const providersArray = data || [];
+      console.log('🔥 Final providers array:', providersArray);
+      
+      setProviders(providersArray);
+      console.log('✅ Providers set in state:', providersArray.length, 'providers');
     } catch (error) {
-      console.error('Error fetching providers:', error);
+      console.error('❌ Error fetching providers:', error);
       setProviders([]);
     } finally {
       setIsLoadingProviders(false);
@@ -158,8 +185,38 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
   useEffect(() => {
     if (event) {
       fetchProviders();
+      fetchIntegrantes();
     }
   }, [event]);
+
+  // Cargar integrantes para el evento
+  const fetchIntegrantes = async () => {
+    if (!id) return;
+    setIsLoadingIntegrantes(true);
+    try {
+      console.log('🔥 Fetching integrantes for event ID:', id);
+      const { readIntegrantes } = await import('@/lib/directus');
+      
+      // Obtener todos los integrantes del evento
+      const data = await readIntegrantes({
+        filter: {
+          evento: {
+            _eq: id
+          }
+        },
+        sort: 'sort,nombre,apellido'
+      });
+      
+      console.log('🔥 Integrantes data received:', data);
+      setIntegrantes(data || []);
+      console.log('✅ Integrantes set in state:', data?.length || 0, 'integrantes');
+    } catch (error) {
+      console.error('❌ Error fetching integrantes:', error);
+      setIntegrantes([]);
+    } finally {
+      setIsLoadingIntegrantes(false);
+    }
+  };
 
   const handleSubmitProvider = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,23 +225,33 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
       
       if (editingProvider) {
         // Actualizar proveedor existente
-        console.log('Updating provider:', editingProvider.id);
+        console.log('🔥 Updating provider:', editingProvider.id);
         const { updateProvider } = await import('@/lib/directus');
         await updateProvider(editingProvider.id, formData);
+        console.log('✅ Provider updated successfully');
         alert('Proveedor actualizado exitosamente');
       } else {
         // Crear nuevo proveedor
-        console.log('Creating provider for event:', id);
-        await createProvider({ ...formData, evento: id, status: 'draft' });
+        console.log('🔥 Creating provider for event:', id);
+        console.log('🔥 Provider data to create:', { ...formData, evento: id, status: 'draft' });
+        
+        const newProvider = await createProvider({ ...formData, evento: id, status: 'draft' });
+        console.log('✅ Provider created successfully:', newProvider);
+        console.log('🔥 New provider ID:', newProvider?.id);
+        console.log('🔥 New provider data:', newProvider);
+        
         alert('Proveedor creado exitosamente');
       }
       
       setFormData({ name: '', contact_name: '', email: '', phone: '', description: '' });
       setShowProviderForm(false);
       setEditingProvider(null);
+      
+      // Recargar proveedores después de crear
+      console.log('🔥 Reloading providers after creation...');
       fetchProviders();
     } catch (error) {
-      console.error('Error saving provider:', error);
+      console.error('❌ Error saving provider:', error);
       alert('Error al guardar el proveedor');
     }
   };
@@ -211,6 +278,80 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
     } catch (error) {
       console.error('Error deleting provider:', error);
       alert('Error al eliminar el proveedor');
+    }
+  };
+
+  // Funciones para integrantes
+  const handleIntegranteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { createIntegrante } = await import('@/lib/directus');
+      
+      if (editingIntegrante) {
+        // Actualizar integrante existente
+        console.log('🔥 Updating integrante:', editingIntegrante.id);
+        const { updateIntegrante } = await import('@/lib/directus');
+        await updateIntegrante(editingIntegrante.id.toString(), integranteForm);
+        console.log('✅ Integrante updated successfully');
+        alert('Integrante actualizado exitosamente');
+      } else {
+        // Crear nuevo integrante
+        console.log('🔥 Creating integrante for event:', id);
+        console.log('🔥 Integrante data to create:', { ...integranteForm, evento: id });
+        
+        const newIntegrante = await createIntegrante({
+          ...integranteForm,
+          evento: id,
+          status: 'active'
+        });
+        console.log('✅ Integrante created successfully:', newIntegrante);
+        console.log('🔥 New integrante ID:', newIntegrante?.data?.id);
+        
+        alert('Integrante creado exitosamente');
+      }
+      
+      // Limpiar formulario
+      setIntegranteForm({
+        nombre: '',
+        apellido: '',
+        documento: '',
+        fecha_nacimiento: '',
+        proveedor: '',
+      });
+      setShowIntegranteForm(false);
+      setEditingIntegrante(null);
+      
+      // Recargar integrantes después de crear
+      console.log('🔥 Reloading integrantes after creation...');
+      fetchIntegrantes();
+    } catch (error) {
+      console.error('❌ Error saving integrante:', error);
+      alert('Error al guardar el integrante');
+    }
+  };
+
+  const handleEditIntegrante = (integrante: Integrante) => {
+    setEditingIntegrante(integrante);
+    setIntegranteForm({
+      nombre: integrante.nombre,
+      apellido: integrante.apellido,
+      documento: integrante.documento,
+      fecha_nacimiento: integrante.fecha_nacimiento.split('T')[0], // Convertir a formato YYYY-MM-DD
+      proveedor: integrante.proveedor?.toString() || '',
+    });
+    setShowIntegranteForm(true);
+  };
+
+  const handleDeleteIntegrante = async (integranteId: string) => {
+    if (!confirm('¿Estás seguro de eliminar este integrante?')) return;
+    try {
+      const { deleteIntegrante } = await import('@/lib/directus');
+      await deleteIntegrante(integranteId.toString());
+      alert('Integrante eliminado exitosamente');
+      fetchIntegrantes();
+    } catch (error) {
+      console.error('Error deleting integrante:', error);
+      alert('Error al eliminar el integrante');
     }
   };
 
@@ -509,6 +650,162 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
                         <div className="text-gray-600">{provider.phone}</div>
                       </div>
                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Integrantes Section */}
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-8 mt-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-black">Integrantes del Evento</h2>
+            <button
+              onClick={() => {
+                setEditingIntegrante(null);
+                setIntegranteForm({
+                  nombre: '',
+                  apellido: '',
+                  documento: '',
+                  fecha_nacimiento: '',
+                  proveedor: '',
+                });
+                setShowIntegranteForm(!showIntegranteForm);
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
+            >
+              {showIntegranteForm ? 'Cancelar' : '+ Agregar Integrante'}
+            </button>
+          </div>
+
+          {/* Integrante Form */}
+          {showIntegranteForm && (
+            <form onSubmit={handleIntegranteSubmit} className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-medium text-black mb-4">
+                {editingIntegrante ? 'Editar Integrante' : 'Nuevo Integrante'}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                  <input
+                    type="text"
+                    value={integranteForm.nombre}
+                    onChange={e => setIntegranteForm({ ...integranteForm, nombre: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Apellido *</label>
+                  <input
+                    type="text"
+                    value={integranteForm.apellido}
+                    onChange={e => setIntegranteForm({ ...integranteForm, apellido: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">DNI/CUIT/CUIL *</label>
+                  <input
+                    type="text"
+                    value={integranteForm.documento}
+                    onChange={e => setIntegranteForm({ ...integranteForm, documento: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Nacimiento *</label>
+                  <input
+                    type="date"
+                    value={integranteForm.fecha_nacimiento}
+                    onChange={e => setIntegranteForm({ ...integranteForm, fecha_nacimiento: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowIntegranteForm(false);
+                    setEditingIntegrante(null);
+                    setIntegranteForm({
+                      nombre: '',
+                      apellido: '',
+                      documento: '',
+                      fecha_nacimiento: '',
+                      proveedor: '',
+                    });
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
+                >
+                  {editingIntegrante ? 'Actualizar' : 'Guardar'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Integrantes List */}
+          {isLoadingIntegrantes ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
+              <p className="mt-2 text-gray-600">Cargando integrantes...</p>
+            </div>
+          ) : integrantes.length === 0 ? (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <div className="text-4xl mb-4">👥</div>
+              <h3 className="text-lg font-medium text-black mb-2">No hay integrantes</h3>
+              <p className="text-gray-600">Agrega el primer integrante para este evento</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {integrantes.map(integrante => (
+                <div key={integrante.id} className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-black">{integrante.nombre} {integrante.apellido}</h3>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(integrante.status)}`}>
+                        {getStatusText(integrante.status)}
+                      </span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEditIntegrante(integrante)}
+                        className="px-3 py-1 text-sm text-black bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteIntegrante(integrante.id.toString())}
+                        className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-black">Documento:</span>
+                      <div className="text-gray-600">{integrante.documento}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-black">Fecha de Nacimiento:</span>
+                      <div className="text-gray-600">{new Date(integrante.fecha_nacimiento).toLocaleDateString('es-AR')}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-black">Creado:</span>
+                      <div className="text-gray-600">{new Date(integrante.date_created).toLocaleDateString('es-AR')}</div>
+                    </div>
                   </div>
                 </div>
               ))}

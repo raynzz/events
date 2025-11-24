@@ -524,6 +524,157 @@ export const deleteProvider = async (id: string) => {
   return response.json();
 };
 
+// ============================================
+// INTEGRANTES MANAGEMENT
+// ============================================
+
+// Tipo para integrantes
+export interface Integrante {
+  id: number;
+  nombre: string;
+  apellido: string;
+  documento: string;
+  fecha_nacimiento: string;
+  status: 'active' | 'inactive';
+  sort: number;
+  date_created: string;
+  date_updated: string;
+  user_created: number;
+  user_updated: number;
+  proveedor?: number;
+  evento?: number;
+}
+
+// Create a new integrante
+export const createIntegrante = async (integranteData: {
+  nombre: string;
+  apellido: string;
+  documento: string;
+  fecha_nacimiento: string;
+  proveedor?: string;
+  evento?: string;
+  status?: string;
+}) => {
+  const response = await fetch(`${directusUrl}/items/integrantes`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      ...integranteData,
+      status: integranteData.status || 'active'
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to create integrante');
+  }
+
+  return response.json();
+};
+
+// Read integrantes for a specific provider
+export const readProviderIntegrantes = async (providerId: string) => {
+  const response = await fetch(
+    `${directusUrl}/items/integrantes?filter[proveedor][_eq]=${providerId}&sort=sort,nombre,apellido&fields=*`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to read provider integrantes');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Read integrantes for a specific event
+export const readEventIntegrantes = async (eventId: string) => {
+  const response = await fetch(
+    `${directusUrl}/items/integrantes?filter[evento][_eq]=${eventId}&sort=sort,nombre,apellido&fields=*`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to read event integrantes');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Read all integrantes
+export const readIntegrantes = async (params?: any) => {
+  const searchParams = new URLSearchParams();
+  if (params) {
+    Object.keys(params).forEach(key => {
+      const value = params[key];
+      if (key === 'fields' && Array.isArray(value)) {
+        searchParams.append(key, value.join(','));
+      } else if (typeof value === 'object' && value !== null) {
+        searchParams.append(key, JSON.stringify(value));
+      } else {
+        searchParams.append(key, String(value));
+      }
+    });
+  }
+
+  const url = `${directusUrl}/items/integrantes${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+  const response = await fetch(url, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Read integrantes failed');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Update an integrante
+export const updateIntegrante = async (id: string, integranteData: Partial<{
+  nombre: string;
+  apellido: string;
+  documento: string;
+  fecha_nacimiento: string;
+  proveedor?: string;
+  evento?: string;
+  status: string;
+}>) => {
+  const response = await fetch(`${directusUrl}/items/integrantes/${id}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(integranteData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to update integrante');
+  }
+
+  return response.json();
+};
+
+// Delete an integrante
+export const deleteIntegrante = async (id: string) => {
+  const response = await fetch(`${directusUrl}/items/integrantes/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to delete integrante');
+  }
+
+  return response.json();
+};
+
 // Hook personalizado para manejar la autenticación
 export const useAuth = () => {
   // La lógica de autenticación se basa en si existe el token en el almacenamiento local

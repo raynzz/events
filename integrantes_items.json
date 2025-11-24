@@ -1,1 +1,77 @@
-{"data":[{"id":1,"status":"draft","sort":null,"user_created":"ec537835-13da-4622-9551-fc4476dd8acf","date_created":"2025-11-10T15:29:55.795Z","user_updated":"ec537835-13da-4622-9551-fc4476dd8acf","date_updated":"2025-11-10T15:42:48.439Z","Nombre":"Rayner","Apellido":"teran","Fecha_nacimiento":"2025-11-09","DNI":"3247852","Tiene_AP":false,"Tiene_ART":true,"Perteneciente":1}]}
+[
+  {
+    "id": 1,
+    "nombre": "Juan",
+    "apellido": "Pérez",
+    "documento": "12345678",
+    "fecha_nacimiento": "1990-05-15",
+    "status": "active",
+    "sort": 1,
+    "date_created": "2024-01-15T10:30:00.000Z",
+    "date_updated": "2024-01-15T10:30:00.000Z",
+    "user_created": 1,
+    "user_updated": 1,
+    "proveedor": 1,
+    "evento": null
+  },
+  {
+    "id": 2,
+    "nombre": "María",
+    "apellido": "González",
+    "documento": "23456789",
+    "fecha_nacimiento": "1985-08-22",
+    "status": "active",
+    "sort": 2,
+    "date_created": "2024-01-15T11:45:00.000Z",
+    "date_updated": "2024-01-15T11:45:00.000Z",
+    "user_created": 1,
+    "user_updated": 1,
+    "proveedor": 2,
+    "evento": null
+  },
+  {
+    "id": 3,
+    "nombre": "Carlos",
+    "apellido": "López",
+    "documento": "10987654321",
+    "fecha_nacimiento": "1978-12-03",
+    "status": "active",
+    "sort": 3,
+    "date_created": "2024-01-15T14:20:00.000Z",
+    "date_updated": "2024-01-15T14:20:00.000Z",
+    "user_created": 1,
+    "user_updated": 1,
+    "proveedor": 1,
+    "evento": 1
+  },
+  {
+    "id": 4,
+    "nombre": "Ana",
+    "apellido": "Martínez",
+    "documento": "30245678901",
+    "fecha_nacimiento": "1992-03-18",
+    "status": "inactive",
+    "sort": 4,
+    "date_created": "2024-01-16T09:15:00.000Z",
+    "date_updated": "2024-01-16T09:15:00.000Z",
+    "user_created": 1,
+    "user_updated": 1,
+    "proveedor": 3,
+    "evento": 2
+  },
+  {
+    "id": 5,
+    "nombre": "Luis",
+    "apellido": "Rodríguez",
+    "documento": "98765432",
+    "fecha_nacimiento": "1988-07-10",
+    "status": "active",
+    "sort": 5,
+    "date_created": "2024-01-16T16:40:00.000Z",
+    "date_updated": "2024-01-16T16:40:00.000Z",
+    "user_created": 1,
+    "user_updated": 1,
+    "proveedor": null,
+    "evento": 1
+  }
+]
