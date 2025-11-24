@@ -3,12 +3,12 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import LoginForm from '@/components/LoginForm';
-import React from 'react';
+import React, { Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Manejo de searchParams con useSearchParams hook
   const callbackUrl = searchParams.get('callbackUrl') || '/';
 
@@ -56,5 +56,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
