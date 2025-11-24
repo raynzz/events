@@ -296,7 +296,7 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
         alert('Integrante actualizado exitosamente');
       } else {
         // Crear nuevo integrante
-        console.log('🔥 Creating integrante for event:', id);
+        console.log('🔥 Creating integrante for provider:', integranteForm.proveedor);
         console.log('🔥 Integrante data to create:', { ...integranteForm, evento: id });
         
         const newIntegrante = await createIntegrante({
@@ -651,160 +651,155 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
                       </div>
                     )}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Integrantes Section */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-8 mt-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-black">Integrantes del Evento</h2>
-            <button
-              onClick={() => {
-                setEditingIntegrante(null);
-                setIntegranteForm({
-                  nombre: '',
-                  apellido: '',
-                  documento: '',
-                  fecha_nacimiento: '',
-                  proveedor: '',
-                });
-                setShowIntegranteForm(!showIntegranteForm);
-              }}
-              className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
-            >
-              {showIntegranteForm ? 'Cancelar' : '+ Agregar Integrante'}
-            </button>
-          </div>
-
-          {/* Integrante Form */}
-          {showIntegranteForm && (
-            <form onSubmit={handleIntegranteSubmit} className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-medium text-black mb-4">
-                {editingIntegrante ? 'Editar Integrante' : 'Nuevo Integrante'}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
-                  <input
-                    type="text"
-                    value={integranteForm.nombre}
-                    onChange={e => setIntegranteForm({ ...integranteForm, nombre: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Apellido *</label>
-                  <input
-                    type="text"
-                    value={integranteForm.apellido}
-                    onChange={e => setIntegranteForm({ ...integranteForm, apellido: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">DNI/CUIT/CUIL *</label>
-                  <input
-                    type="text"
-                    value={integranteForm.documento}
-                    onChange={e => setIntegranteForm({ ...integranteForm, documento: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Nacimiento *</label>
-                  <input
-                    type="date"
-                    value={integranteForm.fecha_nacimiento}
-                    onChange={e => setIntegranteForm({ ...integranteForm, fecha_nacimiento: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowIntegranteForm(false);
-                    setEditingIntegrante(null);
-                    setIntegranteForm({
-                      nombre: '',
-                      apellido: '',
-                      documento: '',
-                      fecha_nacimiento: '',
-                      proveedor: '',
-                    });
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
-                >
-                  {editingIntegrante ? 'Actualizar' : 'Guardar'}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Integrantes List */}
-          {isLoadingIntegrantes ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
-              <p className="mt-2 text-gray-600">Cargando integrantes...</p>
-            </div>
-          ) : integrantes.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <div className="text-4xl mb-4">👥</div>
-              <h3 className="text-lg font-medium text-black mb-2">No hay integrantes</h3>
-              <p className="text-gray-600">Agrega el primer integrante para este evento</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {integrantes.map(integrante => (
-                <div key={integrante.id} className="p-6 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-black">{integrante.nombre} {integrante.apellido}</h3>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(integrante.status)}`}>
-                        {getStatusText(integrante.status)}
-                      </span>
-                    </div>
-                    <div className="flex space-x-2">
+                  {/* Integrantes Section - Inside Provider */}
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-lg font-semibold text-black">Integrantes</h4>
                       <button
-                        onClick={() => handleEditIntegrante(integrante)}
-                        className="px-3 py-1 text-sm text-black bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                        onClick={() => {
+                          setEditingIntegrante(null);
+                          setIntegranteForm({
+                            nombre: '',
+                            apellido: '',
+                            documento: '',
+                            fecha_nacimiento: '',
+                            proveedor: provider.id,
+                          });
+                          setShowIntegranteForm(!showIntegranteForm);
+                        }}
+                        className="px-3 py-1 text-sm text-white bg-black rounded-md hover:bg-gray-800"
                       >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDeleteIntegrante(integrante.id.toString())}
-                        className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700"
-                      >
-                        Eliminar
+                        {showIntegranteForm ? 'Cancelar' : '+ Agregar'}
                       </button>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-black">Documento:</span>
-                      <div className="text-gray-600">{integrante.documento}</div>
-                    </div>
-                    <div>
-                      <span className="font-medium text-black">Fecha de Nacimiento:</span>
-                      <div className="text-gray-600">{new Date(integrante.fecha_nacimiento).toLocaleDateString('es-AR')}</div>
-                    </div>
-                    <div>
-                      <span className="font-medium text-black">Creado:</span>
-                      <div className="text-gray-600">{new Date(integrante.date_created).toLocaleDateString('es-AR')}</div>
+
+                    {/* Integrante Form */}
+                    {showIntegranteForm && (
+                      <form onSubmit={handleIntegranteSubmit} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h5 className="text-md font-medium text-black mb-3">
+                          {editingIntegrante ? 'Editar Integrante' : 'Nuevo Integrante'}
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Nombre *</label>
+                            <input
+                              type="text"
+                              value={integranteForm.nombre}
+                              onChange={e => setIntegranteForm({ ...integranteForm, nombre: e.target.value })}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Apellido *</label>
+                            <input
+                              type="text"
+                              value={integranteForm.apellido}
+                              onChange={e => setIntegranteForm({ ...integranteForm, apellido: e.target.value })}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">DNI/CUIT/CUIL *</label>
+                            <input
+                              type="text"
+                              value={integranteForm.documento}
+                              onChange={e => setIntegranteForm({ ...integranteForm, documento: e.target.value })}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Fecha Nacimiento *</label>
+                            <input
+                              type="date"
+                              value={integranteForm.fecha_nacimiento}
+                              onChange={e => setIntegranteForm({ ...integranteForm, fecha_nacimiento: e.target.value })}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 flex justify-end space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowIntegranteForm(false);
+                              setEditingIntegrante(null);
+                              setIntegranteForm({
+                                nombre: '',
+                                apellido: '',
+                                documento: '',
+                                fecha_nacimiento: '',
+                                proveedor: '',
+                              });
+                            }}
+                            className="px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-3 py-1 text-xs font-medium text-white bg-black rounded-md hover:bg-gray-800"
+                          >
+                            {editingIntegrante ? 'Actualizar' : 'Guardar'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {/* Integrantes List */}
+                    <div className="space-y-3">
+                      {isLoadingIntegrantes ? (
+                        <div className="text-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto"></div>
+                          <p className="mt-1 text-xs text-gray-600">Cargando integrantes...</p>
+                        </div>
+                      ) : integrantes.length === 0 ? (
+                        <div className="text-center py-6 bg-gray-50 rounded-lg">
+                          <div className="text-2xl mb-2">👤</div>
+                          <p className="text-xs text-gray-600">No hay integrantes en este proveedor</p>
+                        </div>
+                      ) : (
+                        integrantes
+                          .filter(integrante => integrante.proveedor?.toString() === provider.id)
+                          .map(integrante => (
+                            <div key={integrante.id} className="p-3 bg-white rounded border border-gray-200">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <h6 className="font-medium text-sm text-black">{integrante.nombre} {integrante.apellido}</h6>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(integrante.status)}`}>
+                                    {getStatusText(integrante.status)}
+                                  </span>
+                                </div>
+                                <div className="flex space-x-1">
+                                  <button
+                                    onClick={() => handleEditIntegrante(integrante)}
+                                    className="px-2 py-0.5 text-xs text-black bg-white border border-gray-300 rounded hover:bg-gray-50"
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteIntegrante(integrante.id.toString())}
+                                    className="px-2 py-0.5 text-xs text-white bg-red-600 rounded hover:bg-red-700"
+                                  >
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                <div>
+                                  <span className="font-medium">Documento:</span> {integrante.documento}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Nacimiento:</span> {new Date(integrante.fecha_nacimiento).toLocaleDateString('es-AR')}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                      )}
                     </div>
                   </div>
                 </div>
