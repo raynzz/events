@@ -11,10 +11,6 @@ interface Event {
   startDate: string;
   endDate: string;
   location: string;
-  capacity: number;
-  price: number;
-  category: string;
-  requiresLiquorLicense: boolean;
   status: 'draft' | 'published' | 'cancelled' | 'completed';
   createdAt: string;
 }
@@ -45,10 +41,6 @@ export default function EventsPage() {
           startDate: item.start_date,
           endDate: item.end_date,
           location: item.location,
-          capacity: item.capacity,
-          price: item.price,
-          category: 'conferencia', // Default or map if category field exists
-          requiresLiquorLicense: item.requires_liquor_license,
           status: item.status,
           createdAt: item.date_created
         }));
@@ -108,17 +100,7 @@ export default function EventsPage() {
     }
   };
 
-  const getCategoryText = (category: string) => {
-    const categories: { [key: string]: string } = {
-      conferencia: 'Conferencia',
-      workshop: 'Workshop',
-      networking: 'Networking',
-      social: 'Evento Social',
-      cultural: 'Evento Cultural',
-      deportivo: 'Evento Deportivo'
-    };
-    return categories[category] || category;
-  };
+
 
   if (loading) {
     return (
@@ -293,16 +275,11 @@ export default function EventsPage() {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
                           {getStatusText(event.status)}
                         </span>
-                        {event.requiresLiquorLicense && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                            🍷 Venta de Licores
-                          </span>
-                        )}
                       </div>
 
                       <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
                         <div>
                           <span className="font-medium">Fecha:</span>
                           <div>{new Date(event.startDate).toLocaleDateString('es-AR')} {new Date(event.startDate).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</div>
@@ -311,23 +288,10 @@ export default function EventsPage() {
                           <span className="font-medium">Ubicación:</span>
                           <div>{event.location}</div>
                         </div>
-                        <div>
-                          <span className="font-medium">Capacidad:</span>
-                          <div>{event.capacity} personas</div>
-                        </div>
-                        <div>
-                          <span className="font-medium">Precio:</span>
-                          <div>{event.price > 0 ? `$${event.price}` : 'Gratis'}</div>
-                        </div>
                       </div>
 
-                      <div className="flex items-center space-x-4 text-sm">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {getCategoryText(event.category)}
-                        </span>
-                        <span className="text-gray-500">
-                          Creado el {new Date(event.createdAt).toLocaleDateString('es-AR')}
-                        </span>
+                      <div className="text-sm text-gray-500">
+                        Creado el {new Date(event.createdAt).toLocaleDateString('es-AR')}
                       </div>
                     </div>
 
