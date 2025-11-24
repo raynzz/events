@@ -19,7 +19,7 @@ type LoginFormProps = {
   callbackUrl?: string;
 };
 
-export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
+export default function LoginForm({ callbackUrl = '/dashboard' }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -41,7 +41,8 @@ export default function LoginForm({ callbackUrl = '/' }: LoginFormProps) {
 
     try {
       await login(data.email, data.password);
-      router.push(callbackUrl);
+      // Always redirect to dashboard after login
+      router.push('/dashboard');
       router.refresh();
     } catch (err) {
       setError('Credenciales incorrectas. Por favor, intenta de nuevo.');

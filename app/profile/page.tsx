@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { User } from '@/lib/directus';
+import { User, getAssetUrl } from '@/lib/directus';
+import Avatar from '@/components/Avatar';
 
 export default function ProfilePage() {
   const { user, loading, updateUser } = useAuth();
@@ -43,14 +44,14 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       // En una aplicación real, aquí se llamaría a la API
       console.log('Actualizando usuario:', formData);
-      
+
       // Simular llamada a API
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Actualizar el contexto de autenticación
       if (updateUser) {
         await updateUser({
@@ -59,10 +60,10 @@ export default function ProfilePage() {
           email: formData.email
         });
       }
-      
+
       setSaveSuccess(true);
       setIsEditing(false);
-      
+
       // Ocultar el mensaje de éxito después de 3 segundos
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
@@ -136,6 +137,12 @@ export default function ProfilePage() {
     });
   };
 
+  // Get avatar URL from Directus
+  const avatarUrl = getAssetUrl(user.avatar);
+  const initials = user.first_name && user.last_name
+    ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`
+    : 'U';
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -160,17 +167,12 @@ export default function ProfilePage() {
           {/* Profile Header */}
           <div className="p-8 border-b border-gray-200">
             <div className="flex items-center space-x-6">
-              <div className="flex-shrink-0">
-                <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center">
-                  {user.first_name && user.last_name ? (
-                    <span className="text-white text-xl font-bold">
-                      {user.first_name.charAt(0)}{user.last_name.charAt(0)}
-                    </span>
-                  ) : (
-                    <span className="text-white text-xl font-bold">U</span>
-                  )}
-                </div>
-              </div>
+              <Avatar
+                src={avatarUrl}
+                alt={`${user.first_name} ${user.last_name}`}
+                size="lg"
+                fallbackText={initials}
+              />
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-black">
                   {user.first_name} {user.last_name}

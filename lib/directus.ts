@@ -251,6 +251,12 @@ export const deleteItem = async (collection: string, id: string) => {
   return response.json();
 };
 
+// Helper function to get asset URL from Directus
+export const getAssetUrl = (fileId: string | null | undefined): string | null => {
+  if (!fileId) return null;
+  return `${directusUrl}/assets/${fileId}`;
+};
+
 // Hook personalizado para manejar la autenticación
 export const useAuth = () => {
   // La lógica de autenticación se basa en si existe el token en el almacenamiento local
