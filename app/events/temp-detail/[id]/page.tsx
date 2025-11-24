@@ -288,16 +288,50 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
       const { createIntegrante } = await import('@/lib/directus');
       
       if (editingIntegrante) {
-        // Actualizar integrante existente
+        // Actualizar integrante existente - actualización optimista
         console.log('🔥 Updating integrante:', editingIntegrante.id);
+        
+        // Actualizar en la lista actual de inmediato (optimista)
+        const updatedIntegrantes = integrantes.map(integrante =>
+          integrante.id === editingIntegrante.id
+            ? {
+                ...integrante,
+                nombre: integranteForm.nombre,
+                apellido: integranteForm.apellido,
+                documento: integranteForm.documento,
+                fecha_nacimiento: integranteForm.fecha_nacimiento
+              }
+            : integrante
+        );
+        setIntegrantes(updatedIntegrantes);
+        
         const { updateIntegrante } = await import('@/lib/directus');
         await updateIntegrante(editingIntegrante.id.toString(), integranteForm);
         console.log('✅ Integrante updated successfully');
         alert('Integrante actualizado exitosamente');
       } else {
-        // Crear nuevo integrante
+        // Crear nuevo integrante - actualización optimista
         console.log('🔥 Creating integrante for provider:', integranteForm.proveedor);
-        console.log('🔥 Integrante data to create:', { ...integranteForm, evento: id });
+        
+        // Crear objeto optimista para mostrar inmediatamente
+        const newIntegranteOptimista: Integrante = {
+          id: Date.now(), // ID temporal para el optimista
+          nombre: integranteForm.nombre,
+          apellido: integranteForm.apellido,
+          documento: integranteForm.documento,
+          fecha_nacimiento: integranteForm.fecha_nacimiento,
+          proveedor: parseInt(integranteForm.proveedor),
+          evento: parseInt(id),
+          status: 'active',
+          sort: 0,
+          date_created: new Date().toISOString(),
+          date_updated: new Date().toISOString(),
+          user_created: 0,
+          user_updated: 0
+        };
+        
+        // Agregar a la lista inmediatamente (optimista)
+        setIntegrantes(prev => [...prev, newIntegranteOptimista]);
         
         const newIntegrante = await createIntegrante({
           ...integranteForm,
@@ -308,6 +342,15 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
         console.log('🔥 New integrante ID:', newIntegrante?.data?.id);
         
         alert('Integrante creado exitosamente');
+        
+        // Reemplazar el optimista con el real si tenemos el ID real
+        if (newIntegrante?.data?.id) {
+          setIntegrantes(prev => prev.map(integrante =>
+            integrante.id === newIntegranteOptimista.id
+              ? { ...newIntegranteOptimista, id: newIntegrante.data.id.toString() }
+              : integrante
+          ));
+        }
       }
       
       // Limpiar formulario
@@ -321,12 +364,14 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
       setShowIntegranteForm(false);
       setEditingIntegrante(null);
       
-      // Recargar integrantes después de crear
-      console.log('🔥 Reloading integrantes after creation...');
-      fetchIntegrantes();
+      // Solo recargar si hubo error o para sincronizar completamente
+      console.log('🔥 Data updated in real-time');
     } catch (error) {
       console.error('❌ Error saving integrante:', error);
       alert('Error al guardar el integrante');
+      
+      // En caso de error, recargar los datos reales
+      fetchIntegrantes();
     }
   };
 
