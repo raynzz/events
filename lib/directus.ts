@@ -15,7 +15,7 @@ export interface User {
 }
 
 // Configuración de Directus (DIRECTUS_URL puede usarse para peticiones públicas/anónimas)
-const directusUrl = process.env.DIRECTUS_URL || 'https://rayner-seguros.6vlrrp.easypanel.host';
+const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || process.env.DIRECTUS_URL || 'https://rayner-seguros.6vlrrp.easypanel.host';
 const directusToken = process.env.DIRECTUS_TOKEN || '0bGJAHZnl24NIQ4l8v_BUcFXhBKAikwu'; // Token estático de Super Admin/API
 
 /**

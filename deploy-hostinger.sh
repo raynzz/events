@@ -9,6 +9,11 @@ IMAGE_TAG="latest"
 CONTAINER_NAME="mi-app-next"
 PORT=3000
 
+# URL de Directus (Backend)
+# Puedes cambiar esto aquí o pasarla como variable de entorno al ejecutar el script
+# Ejemplo: DIRECTUS_URL=https://mi-api.com ./deploy-hostinger.sh build
+DIRECTUS_URL=${DIRECTUS_URL:-"https://rayner-seguros.6vlrrp.easypanel.host"}
+
 # Colores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -31,7 +36,12 @@ error() {
 # Función para construir la imagen Docker
 build_image() {
     log "Construyendo imagen Docker para Hostinger..."
-    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+    log "Usando URL de Directus: ${DIRECTUS_URL}"
+    
+    docker build \
+        --build-arg NEXT_PUBLIC_DIRECTUS_URL="${DIRECTUS_URL}" \
+        -t ${IMAGE_NAME}:${IMAGE_TAG} .
+        
     log "Imagen construida: ${IMAGE_NAME}:${IMAGE_TAG}"
 }
 
@@ -58,10 +68,13 @@ start_container() {
         --restart unless-stopped \
         -e NODE_ENV=production \
         -e NEXT_TELEMETRY_DISABLED=1 \
+        -e NEXT_PUBLIC_DIRECTUS_URL="${DIRECTUS_URL}" \
         ${IMAGE_NAME}:${IMAGE_TAG}
     
     log "Contenedor iniciado: ${CONTAINER_NAME}"
-    log "Accede a la aplicación en: https://rayner-hop.6vlrrp.easypanel.host"
+    log "Backend (Directus): ${DIRECTUS_URL}"
+    # Nota: La URL del frontend depende del dominio configurado en EasyPanel
+    log "Si estás en local, accede a: http://localhost:${PORT}"
 }
 
 # Función para detener el contenedor
@@ -125,6 +138,9 @@ show_help() {
     echo "  clean    - Limpiar (eliminar contenedor e imagen)"
     echo "  test     - Probar aplicación localmente"
     echo "  help     - Mostrar este mensaje de ayuda"
+    echo ""
+    echo "Variables de entorno opcionales:"
+    echo "  DIRECTUS_URL - URL del backend Directus (default: https://rayner-seguros.6vlrrp.easypanel.host)"
 }
 
 # Parseo de argumentos
