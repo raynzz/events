@@ -11,10 +11,6 @@ interface EventData {
   startDate: string;
   endDate: string;
   location: string;
-  capacity: number;
-  price: number;
-  category: string;
-  requiresLiquorLicense: boolean;
 }
 
 export default function CreateEventPage() {
@@ -29,10 +25,6 @@ export default function CreateEventPage() {
     startDate: '',
     endDate: '',
     location: '',
-    capacity: 100,
-    price: 0,
-    category: '',
-    requiresLiquorLicense: false,
   });
 
   const updateFormData = (field: keyof EventData, value: any) => {
@@ -69,9 +61,6 @@ export default function CreateEventPage() {
         start_date: formData.startDate,
         end_date: formData.endDate,
         location: formData.location,
-        capacity: formData.capacity,
-        price: formData.price,
-        requires_liquor_license: formData.requiresLiquorLicense,
         status: 'draft',
       };
 
@@ -214,66 +203,6 @@ export default function CreateEventPage() {
                   required
                 />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Capacidad
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.capacity}
-                    onChange={(e) => updateFormData('capacity', parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    min="1"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio (USD)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => updateFormData('price', parseFloat(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Categoría
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => updateFormData('category', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  <option value="">Seleccionar categoría</option>
-                  <option value="conferencia">Conferencia</option>
-                  <option value="taller">Taller</option>
-                  <option value="networking">Networking</option>
-                  <option value="social">Social</option>
-                  <option value="otro">Otro</option>
-                </select>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="liquorLicense"
-                  checked={formData.requiresLiquorLicense}
-                  onChange={(e) => updateFormData('requiresLiquorLicense', e.target.checked)}
-                  className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
-                />
-                <label htmlFor="liquorLicense" className="ml-2 block text-sm text-gray-700">
-                  Requiere licencia de licor
-                </label>
-              </div>
             </div>
 
             <div className="mt-8 flex justify-end">
@@ -281,65 +210,43 @@ export default function CreateEventPage() {
                 onClick={handleNext}
                 className="px-6 py-2 bg-black text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black"
               >
-                Siguiente
+                Continuar
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 2: Preview and Submit */}
+        {/* Step 2: Preview */}
         {activeStep === 2 && (
           <div className="mt-8 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-black mb-6">Confirmar Información</h2>
+            <h2 className="text-xl font-semibold text-black mb-6">Confirmar Información del Evento</h2>
 
             <div className="space-y-4">
-              <div className="border-b pb-4">
-                <h3 className="text-sm font-medium text-gray-500">Título</h3>
-                <p className="mt-1 text-lg text-black">{formData.title}</p>
+              <div>
+                <p className="text-sm text-gray-600">Título</p>
+                <p className="mt-1 text-black font-medium">{formData.title}</p>
               </div>
 
-              <div className="border-b pb-4">
-                <h3 className="text-sm font-medium text-gray-500">Descripción</h3>
+              <div>
+                <p className="text-sm text-gray-600">Descripción</p>
                 <p className="mt-1 text-black">{formData.description}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 border-b pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Fecha de Inicio</h3>
+                  <p className="text-sm text-gray-600">Fecha de Inicio</p>
                   <p className="mt-1 text-black">{new Date(formData.startDate).toLocaleString()}</p>
                 </div>
+
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500">Fecha de Fin</h3>
+                  <p className="text-sm text-gray-600">Fecha de Fin</p>
                   <p className="mt-1 text-black">{new Date(formData.endDate).toLocaleString()}</p>
                 </div>
               </div>
 
-              <div className="border-b pb-4">
-                <h3 className="text-sm font-medium text-gray-500">Ubicación</h3>
+              <div>
+                <p className="text-sm text-gray-600">Ubicación</p>
                 <p className="mt-1 text-black">{formData.location}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 border-b pb-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Capacidad</h3>
-                  <p className="mt-1 text-black">{formData.capacity} personas</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Precio</h3>
-                  <p className="mt-1 text-black">${formData.price}</p>
-                </div>
-              </div>
-
-              {formData.category && (
-                <div className="border-b pb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Categoría</h3>
-                  <p className="mt-1 text-black capitalize">{formData.category}</p>
-                </div>
-              )}
-
-              <div className="border-b pb-4">
-                <h3 className="text-sm font-medium text-gray-500">Licencia de Licor</h3>
-                <p className="mt-1 text-black">{formData.requiresLiquorLicense ? 'Sí' : 'No'}</p>
               </div>
             </div>
 
@@ -348,14 +255,14 @@ export default function CreateEventPage() {
                 onClick={handleBack}
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black"
               >
-                Atrás
+                Volver
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="px-6 py-2 bg-black text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Creando evento...' : 'Crear Evento'}
+                {isSubmitting ? 'Creando...' : 'Crear Evento'}
               </button>
             </div>
           </div>

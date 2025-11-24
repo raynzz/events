@@ -369,11 +369,7 @@ export const createEvent = async (eventData: {
   start_date: string;
   end_date: string;
   location: string;
-  capacity: number;
-  price: number;
-  requires_liquor_license: boolean;
   status?: string;
-  Responsable?: string; // ID del usuario responsable
 }) => {
   const response = await fetch(`${directusUrl}/items/eventos`, {
     method: 'POST',
