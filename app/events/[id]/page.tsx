@@ -200,7 +200,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>${'{'}getStatusText(event.status)}${'}'}</span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>{getStatusText(event.status)}</span>
             </div>
           </div>
         </div>
