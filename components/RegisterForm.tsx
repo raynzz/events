@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { register } from '@/lib/directus';
 
 const registerSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -26,12 +27,12 @@ export default function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { login } = useAuth();
   const router = useRouter();
 
   const {
-    register,
+    register: registerField,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
@@ -43,18 +44,18 @@ export default function RegisterForm() {
     setError('');
 
     try {
-      // Aquí deberías llamar a tu API de registro
-      // Por ahora, simulamos un registro exitoso e iniciamos sesión automáticamente
-      console.log('Register data:', data);
-      
+      // Crear el usuario en Directus
+      await register(data.email, data.password, data.firstName, data.lastName);
+
       // Iniciar sesión automáticamente después del registro
       await login(data.email, data.password);
-      
+
       // Redirigir al dashboard
       router.push('/dashboard');
       router.refresh();
     } catch (err) {
-      setError('Error al crear la cuenta. Por favor, intenta de nuevo.');
+      const errorMessage = err instanceof Error ? err.message : 'Error al crear la cuenta. Por favor, intenta de nuevo.';
+      setError(errorMessage);
       console.error('Register error:', err);
     } finally {
       setIsLoading(false);
@@ -72,7 +73,7 @@ export default function RegisterForm() {
             Regístrate para comenzar a usar la aplicación
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
             <div>
@@ -80,7 +81,7 @@ export default function RegisterForm() {
                 Nombre
               </label>
               <input
-                {...register('firstName')}
+                {...registerField('firstName')}
                 type="text"
                 autoComplete="given-name"
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -90,13 +91,13 @@ export default function RegisterForm() {
                 <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
               )}
             </div>
-            
+
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
                 Apellido
               </label>
               <input
-                {...register('lastName')}
+                {...registerField('lastName')}
                 type="text"
                 autoComplete="family-name"
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -113,7 +114,7 @@ export default function RegisterForm() {
               Email
             </label>
             <input
-              {...register('email')}
+              {...registerField('email')}
               type="email"
               autoComplete="email"
               className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -123,7 +124,7 @@ export default function RegisterForm() {
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
             )}
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -131,7 +132,7 @@ export default function RegisterForm() {
               </label>
               <div className="relative">
                 <input
-                  {...register('password')}
+                  {...registerField('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   className="mt-1 appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -153,14 +154,14 @@ export default function RegisterForm() {
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
             </div>
-            
+
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirmar contraseña
               </label>
               <div className="relative">
                 <input
-                  {...register('confirmPassword')}
+                  {...registerField('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   className="mt-1 appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"

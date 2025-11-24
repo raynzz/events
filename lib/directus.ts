@@ -114,6 +114,57 @@ export const refresh = async (refreshToken: string) => {
   return data.data;
 };
 
+// Función de registro de usuarios
+export const register = async (
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string
+) => {
+  // Primero, obtener el UUID del rol "User"
+  const rolesResponse = await fetch(`${directusUrl}/roles?filter[name][_eq]=User`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${directusToken}`, // Usar token de admin para crear usuarios
+    },
+  });
+
+  if (!rolesResponse.ok) {
+    throw new Error('Failed to fetch user role');
+  }
+
+  const rolesData = await rolesResponse.json();
+  const userRole = rolesData.data?.[0];
+
+  if (!userRole) {
+    throw new Error('User role not found. Please contact administrator.');
+  }
+
+  // Crear el usuario con el rol correcto
+  const response = await fetch(`${directusUrl}/users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${directusToken}`, // Usar token de admin para crear usuarios
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      first_name: firstName,
+      last_name: lastName,
+      role: userRole.id,
+      status: 'active',
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Registration failed');
+  }
+
+  return response.json();
+};
+
 // Funciones de usuario
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
