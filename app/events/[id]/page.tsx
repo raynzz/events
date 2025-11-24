@@ -52,7 +52,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     if (!id) return;
     const fetchEvent = async () => {
       try {
-        const data = await readItem('events', id);
+        const data = await readItem('eventos', id);
         setEvent(data);
       } catch (error) {
         console.error('Error fetching event:', error);
