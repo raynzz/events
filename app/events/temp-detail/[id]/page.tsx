@@ -32,6 +32,11 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
   const { user, loading } = useAuth();
   const { id } = use(params);
   
+  // Debug: Ver el ID que recibimos
+  console.log('🔍 Temp Detail Page - Component mounted');
+  console.log('🔍 ID from params:', id);
+  console.log('🔍 ID type:', typeof id);
+  
   const [event, setEvent] = useState<Event | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [isLoadingProviders, setIsLoadingProviders] = useState(false);
@@ -49,32 +54,83 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
   useEffect(() => {
     if (!user?.id || !id) return;
     
+    console.log('🔍 Temp Detail Page - Starting to fetch event...');
+    console.log('🔍 User ID:', user.id);
+    console.log('🔍 Event ID from params:', id);
+    
     const fetchEventFromList = async () => {
       try {
+        console.log('🔍 Importing readUserEvents...');
         const { readUserEvents } = await import('@/lib/directus');
+        
+        console.log('🔍 Fetching user events...');
         const data = await readUserEvents(user.id);
+        console.log('🔥 User events data received:', data);
         
-        // Buscar el evento específico por ID
-        const foundEvent = data.find((item: any) => item.id === id);
-        
-        if (foundEvent) {
-          const mappedEvent: Event = {
-            id: foundEvent.id,
-            title: foundEvent.title,
-            description: foundEvent.description,
-            startDate: foundEvent.start_date,
-            endDate: foundEvent.end_date,
-            location: foundEvent.location,
-            status: foundEvent.status,
-            createdAt: foundEvent.date_created
-          };
-          setEvent(mappedEvent);
-          console.log('Event found from list:', mappedEvent);
+        if (data && data.length > 0) {
+          console.log('🔥 Searching for event with ID:', id);
+          console.log('🔥 ID type:', typeof id);
+          
+          // Mostrar todos los IDs disponibles para comparación
+          const availableIds = data.map((item: any) => ({
+            id: item.id,
+            type: typeof item.id,
+            stringId: String(item.id),
+            numberId: Number(item.id)
+          }));
+          console.log('🔥 Available event IDs:', availableIds);
+          
+          // Intentar encontrar el evento con diferentes comparaciones
+          let foundEvent = data.find((item: any) => {
+            console.log('🔍 Comparing:', item.id, 'with:', id);
+            console.log('🔍 Types:', typeof item.id, 'vs', typeof id);
+            console.log('🔍 Strict equality:', item.id === id);
+            console.log('🔍 String equality:', String(item.id) === String(id));
+            console.log('🔍 Number equality:', Number(item.id) === Number(id));
+            
+            return item.id === id ||
+                   String(item.id) === String(id) ||
+                   Number(item.id) === Number(id);
+          });
+          
+          console.log('🔥 Found event with first method:', !!foundEvent);
+          
+          if (!foundEvent) {
+            // Si no encuentra con el método anterior, intentar búsqueda manual
+            console.log('🔍 Trying manual search...');
+            for (let i = 0; i < data.length; i++) {
+              const item = data[i];
+              if (String(item.id) === String(id) || Number(item.id) === Number(id)) {
+                foundEvent = item;
+                console.log('🔍 Event found manually:', foundEvent);
+                break;
+              }
+            }
+          }
+          
+          if (foundEvent) {
+            console.log('✅ Event found:', foundEvent);
+            const mappedEvent: Event = {
+              id: foundEvent.id,
+              title: foundEvent.title,
+              description: foundEvent.description,
+              startDate: foundEvent.start_date,
+              endDate: foundEvent.end_date,
+              location: foundEvent.location,
+              status: foundEvent.status,
+              createdAt: foundEvent.date_created
+            };
+            setEvent(mappedEvent);
+            console.log('✅ Event mapped and set:', mappedEvent);
+          } else {
+            console.log('❌ Event not found in user list with ID:', id);
+            console.log('❌ Tried all comparison methods');
+          }
         } else {
-          console.log('Event not found in user list');
+          console.log('❌ No events returned for user');
         }
       } catch (error) {
-        console.error('Error fetching event from list:', error);
+        console.error('❌ Error fetching event from list:', error);
       }
     };
     
