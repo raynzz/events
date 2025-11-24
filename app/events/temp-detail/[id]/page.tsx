@@ -809,7 +809,7 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
                         </div>
                       ) : (
                         integrantes
-                          .filter(integrante => integrante.proveedor?.toString() === provider.id)
+                          .filter(integrante => integrante.proveedor === parseInt(provider.id))
                           .map(integrante => (
                             <div key={integrante.id} className="p-3 bg-white rounded border border-gray-200">
                               <div className="flex justify-between items-start mb-2">

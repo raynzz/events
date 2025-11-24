@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { readItem, readEventProviders, createProvider, updateProvider, deleteProvider } from '@/lib/directus';
+import { readItem, readEventProviders, createProvider, updateProvider, deleteProvider, Integrante } from '@/lib/directus';
 import { use } from 'react';
 
 interface Provider {
@@ -51,6 +51,19 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     description: '',
   });
 
+  // Estados para integrantes
+  const [integrantes, setIntegrantes] = useState<Integrante[]>([]);
+  const [isLoadingIntegrantes, setIsLoadingIntegrantes] = useState(false);
+  const [showIntegranteForm, setShowIntegranteForm] = useState(false);
+  const [editingIntegrante, setEditingIntegrante] = useState<Integrante | null>(null);
+  const [integranteForm, setIntegranteForm] = useState({
+    nombre: '',
+    apellido: '',
+    documento: '',
+    fecha_nacimiento: '',
+    proveedor: '',
+  });
+
   // Fetch event details
   useEffect(() => {
     if (!id) return;
@@ -91,7 +104,37 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
   useEffect(() => {
     fetchProviders();
+    fetchIntegrantes();
   }, [id]);
+
+  // Cargar integrantes para el evento
+  const fetchIntegrantes = async () => {
+    if (!id) return;
+    setIsLoadingIntegrantes(true);
+    try {
+      console.log('🔥 Fetching integrantes for event ID:', id);
+      const { readIntegrantes } = await import('@/lib/directus');
+      
+      // Obtener todos los integrantes del evento
+      const data = await readIntegrantes({
+        filter: {
+          evento: {
+            _eq: id
+          }
+        },
+        sort: 'sort,nombre,apellido'
+      });
+      
+      console.log('🔥 Integrantes data received:', data);
+      setIntegrantes(data || []);
+      console.log('✅ Integrantes set in state:', data?.length || 0, 'integrantes');
+    } catch (error) {
+      console.error('❌ Error fetching integrantes:', error);
+      setIntegrantes([]);
+    } finally {
+      setIsLoadingIntegrantes(false);
+    }
+  };
 
   const handleSubmitProvider = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +177,123 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     } catch (error) {
       console.error('Error deleting provider:', error);
       alert('Error al eliminar el proveedor');
+    }
+  };
+
+  // Funciones para integrantes
+  const handleIntegranteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { createIntegrante, updateIntegrante } = await import('@/lib/directus');
+      
+      if (editingIntegrante) {
+        // Actualizar integrante existente - actualización optimista
+        console.log('🔥 Updating integrante:', editingIntegrante.id);
+        
+        // Actualizar en la lista actual de inmediato (optimista)
+        const updatedIntegrantes = integrantes.map(integrante =>
+          integrante.id === editingIntegrante.id
+            ? {
+                ...integrante,
+                nombre: integranteForm.nombre,
+                apellido: integranteForm.apellido,
+                documento: integranteForm.documento,
+                fecha_nacimiento: integranteForm.fecha_nacimiento
+              }
+            : integrante
+        );
+        setIntegrantes(updatedIntegrantes);
+        
+        await updateIntegrante(editingIntegrante.id.toString(), integranteForm);
+        console.log('✅ Integrante updated successfully');
+        alert('Integrante actualizado exitosamente');
+      } else {
+        // Crear nuevo integrante - actualización optimista
+        console.log('🔥 Creating integrante for provider:', integranteForm.proveedor);
+        
+        // Crear objeto optimista para mostrar inmediatamente
+        const newIntegranteOptimista: Integrante = {
+          id: Date.now(), // ID temporal para el optimista
+          nombre: integranteForm.nombre,
+          apellido: integranteForm.apellido,
+          documento: integranteForm.documento,
+          fecha_nacimiento: integranteForm.fecha_nacimiento,
+          proveedor: parseInt(integranteForm.proveedor),
+          evento: parseInt(id),
+          status: 'active',
+          sort: 0,
+          date_created: new Date().toISOString(),
+          date_updated: new Date().toISOString(),
+          user_created: 0,
+          user_updated: 0
+        };
+        
+        // Agregar a la lista inmediatamente (optimista)
+        setIntegrantes(prev => [...prev, newIntegranteOptimista]);
+        
+        const newIntegrante = await createIntegrante({
+          ...integranteForm,
+          evento: id,
+          status: 'active'
+        });
+        console.log('✅ Integrante created successfully:', newIntegrante);
+        
+        alert('Integrante creado exitosamente');
+        
+        // Reemplazar el optimista con el real si tenemos el ID real
+        if (newIntegrante?.data?.id) {
+          setIntegrantes(prev => prev.map(integrante =>
+            integrante.id === newIntegranteOptimista.id
+              ? { ...newIntegranteOptimista, id: newIntegrante.data.id.toString() }
+              : integrante
+          ));
+        }
+      }
+      
+      // Limpiar formulario
+      setIntegranteForm({
+        nombre: '',
+        apellido: '',
+        documento: '',
+        fecha_nacimiento: '',
+        proveedor: '',
+      });
+      setShowIntegranteForm(false);
+      setEditingIntegrante(null);
+      
+      // Solo recargar si hubo error o para sincronizar completamente
+      console.log('🔥 Data updated in real-time');
+    } catch (error) {
+      console.error('❌ Error saving integrante:', error);
+      alert('Error al guardar el integrante');
+      
+      // En caso de error, recargar los datos reales
+      fetchIntegrantes();
+    }
+  };
+
+  const handleEditIntegrante = (integrante: Integrante) => {
+    setEditingIntegrante(integrante);
+    setIntegranteForm({
+      nombre: integrante.nombre,
+      apellido: integrante.apellido,
+      documento: integrante.documento,
+      fecha_nacimiento: integrante.fecha_nacimiento.split('T')[0], // Convertir a formato YYYY-MM-DD
+      proveedor: integrante.proveedor?.toString() || '',
+    });
+    setShowIntegranteForm(true);
+  };
+
+  const handleDeleteIntegrante = async (integranteId: string) => {
+    if (!confirm('¿Estás seguro de eliminar este integrante?')) return;
+    try {
+      const { deleteIntegrante } = await import('@/lib/directus');
+      await deleteIntegrante(integranteId.toString());
+      alert('Integrante eliminado exitosamente');
+      fetchIntegrantes();
+    } catch (error) {
+      console.error('Error deleting integrante:', error);
+      alert('Error al eliminar el integrante');
     }
   };
 
@@ -398,6 +558,157 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                         <div className="text-gray-600">{provider.phone}</div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Integrantes Section - Inside Provider */}
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-lg font-semibold text-black">Integrantes</h4>
+                      <button
+                        onClick={() => {
+                          setEditingIntegrante(null);
+                          setIntegranteForm({
+                            nombre: '',
+                            apellido: '',
+                            documento: '',
+                            fecha_nacimiento: '',
+                            proveedor: provider.id,
+                          });
+                          setShowIntegranteForm(!showIntegranteForm);
+                        }}
+                        className="px-3 py-1 text-sm text-white bg-black rounded-md hover:bg-gray-800"
+                      >
+                        {showIntegranteForm ? 'Cancelar' : '+ Agregar'}
+                      </button>
+                    </div>
+
+                    {/* Integrante Form */}
+                    {showIntegranteForm && (
+                      <form onSubmit={handleIntegranteSubmit} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h5 className="text-md font-medium text-black mb-3">
+                          {editingIntegrante ? 'Editar Integrante' : 'Nuevo Integrante'}
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Nombre *</label>
+                            <input
+                              type="text"
+                              value={integranteForm.nombre}
+                              onChange={e => setIntegranteForm({ ...integranteForm, nombre: e.target.value })}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Apellido *</label>
+                            <input
+                              type="text"
+                              value={integranteForm.apellido}
+                              onChange={e => setIntegranteForm({ ...integranteForm, apellido: e.target.value })}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">DNI/CUIT/CUIL *</label>
+                            <input
+                              type="text"
+                              value={integranteForm.documento}
+                              onChange={e => setIntegranteForm({ ...integranteForm, documento: e.target.value })}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Fecha Nacimiento *</label>
+                            <input
+                              type="date"
+                              value={integranteForm.fecha_nacimiento}
+                              onChange={e => setIntegranteForm({ ...integranteForm, fecha_nacimiento: e.target.value })}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 flex justify-end space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowIntegranteForm(false);
+                              setEditingIntegrante(null);
+                              setIntegranteForm({
+                                nombre: '',
+                                apellido: '',
+                                documento: '',
+                                fecha_nacimiento: '',
+                                proveedor: '',
+                              });
+                            }}
+                            className="px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-3 py-1 text-xs font-medium text-white bg-black rounded-md hover:bg-gray-800"
+                          >
+                            {editingIntegrante ? 'Actualizar' : 'Guardar'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {/* Integrantes List */}
+                    <div className="space-y-3">
+                      {isLoadingIntegrantes ? (
+                        <div className="text-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto"></div>
+                          <p className="mt-1 text-xs text-gray-600">Cargando integrantes...</p>
+                        </div>
+                      ) : integrantes.length === 0 ? (
+                        <div className="text-center py-6 bg-gray-50 rounded-lg">
+                          <div className="text-2xl mb-2">👤</div>
+                          <p className="text-xs text-gray-600">No hay integrantes en este proveedor</p>
+                        </div>
+                      ) : (
+                        integrantes
+                          .filter(integrante => integrante.proveedor === parseInt(provider.id))
+                          .map(integrante => (
+                            <div key={integrante.id} className="p-3 bg-white rounded border border-gray-200">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <h6 className="font-medium text-sm text-black">{integrante.nombre} {integrante.apellido}</h6>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(integrante.status)}`}>
+                                    {getStatusText(integrante.status)}
+                                  </span>
+                                </div>
+                                <div className="flex space-x-1">
+                                  <button
+                                    onClick={() => handleEditIntegrante(integrante)}
+                                    className="px-2 py-0.5 text-xs text-black bg-white border border-gray-300 rounded hover:bg-gray-50"
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteIntegrante(integrante.id.toString())}
+                                    className="px-2 py-0.5 text-xs text-white bg-red-600 rounded hover:bg-red-700"
+                                  >
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                <div>
+                                  <span className="font-medium">Documento:</span> {integrante.documento}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Nacimiento:</span> {new Date(integrante.fecha_nacimiento).toLocaleDateString('es-AR')}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
