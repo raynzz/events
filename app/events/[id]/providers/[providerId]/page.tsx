@@ -41,10 +41,11 @@ export default function ProviderDetailPage({
   const [integrantes, setIntegrantes] = useState<Integrante[]>([]);
   const [isLoadingIntegrantes, setIsLoadingIntegrantes] = useState(false);
   
-  // Estados para forms
+  // Estados para forms y dropdowns
   const [showProviderForm, setShowProviderForm] = useState(false);
   const [showIntegranteForm, setShowIntegranteForm] = useState(false);
   const [editingIntegrante, setEditingIntegrante] = useState<Integrante | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   
   const [providerForm, setProviderForm] = useState({
     name: '',
@@ -189,16 +190,16 @@ export default function ProviderDetailPage({
       if (editingIntegrante) {
         await updateIntegrante(editingIntegrante.id.toString(), {
           ...integranteForm,
-          proveedor: parseInt(providerId),
-          evento: parseInt(eventId),
+          proveedor: providerId,
+          evento: eventId,
           status: 'active'
         });
         alert('Integrante actualizado exitosamente');
       } else {
         await createIntegrante({
           ...integranteForm,
-          proveedor: parseInt(providerId),
-          evento: parseInt(eventId),
+          proveedor: providerId,
+          evento: eventId,
           status: 'active'
         });
         alert('Integrante creado exitosamente');
@@ -236,6 +237,28 @@ export default function ProviderDetailPage({
       default: return status;
     }
   };
+
+  const toggleDropdown = (dropdownId: string) => {
+    setOpenDropdown(openDropdown === dropdownId ? null : dropdownId);
+  };
+
+  const closeDropdowns = () => {
+    setOpenDropdown(null);
+  };
+
+  // Cerrar dropdowns cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdown && !(event.target as Element).closest('.relative')) {
+        closeDropdowns();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   if (loading) {
     return (
@@ -304,11 +327,92 @@ export default function ProviderDetailPage({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Panel izquierdo - Integrantes */}
+          {/* Panel izquierdo - Provider Details (30%) */}
           <div className="lg:col-span-1">
+            {/* Card del Proveedor */}
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-black mb-2">{provider.name}</h2>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(provider.status)}`}>
+                    {getStatusText(provider.status)}
+                  </span>
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => toggleDropdown('provider')}
+                    className="p-1 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+                    </svg>
+                  </button>
+                  <div className={`absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 ${openDropdown === 'provider' ? 'block' : 'hidden'}`}>
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setShowProviderForm(true);
+                          closeDropdowns();
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Editar Proveedor
+                      </button>
+                      <button
+                        onClick={() => closeDropdowns()}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        Eliminar Proveedor
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {provider.description && (
+                <p className="text-gray-600 mb-6">{provider.description}</p>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <span className="font-medium text-black">Contacto:</span>
+                  <div className="text-gray-600">{provider.contact_name || 'No especificado'}</div>
+                </div>
+                <div>
+                  <span className="font-medium text-black">Email:</span>
+                  <div className="text-gray-600">{provider.email || 'No especificado'}</div>
+                </div>
+                <div>
+                  <span className="font-medium text-black">Teléfono:</span>
+                  <div className="text-gray-600">{provider.phone || 'No especificado'}</div>
+                </div>
+                <div>
+                  <span className="font-medium text-black">Estado:</span>
+                  <div>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(provider.status)}`}>
+                      {getStatusText(provider.status)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Módulo de Documentos Adjuntos (Demo) */}
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-black mb-4">Documentos Adjuntos</h2>
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">📄</div>
+                <p className="text-gray-600">Módulo de documentos</p>
+                <p className="text-sm text-gray-500 mt-2">Próximamente disponible</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Panel derecho - Integrants List (70%) */}
+          <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-black">Integrantes</h2>
+                <h2 className="text-2xl font-bold text-black">Integrantes</h2>
                 <button
                   onClick={() => {
                     setEditingIntegrante(null);
@@ -320,21 +424,21 @@ export default function ProviderDetailPage({
                     });
                     setShowIntegranteForm(!showIntegranteForm);
                   }}
-                  className="px-3 py-1 text-sm text-white bg-black rounded-md hover:bg-gray-800"
+                  className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
                 >
-                  {showIntegranteForm ? 'Cancelar' : '+ Agregar'}
+                  {showIntegranteForm ? 'Cancelar' : '+ Agregar Integrante'}
                 </button>
               </div>
 
               {/* Integrante Form */}
               {showIntegranteForm && (
-                <form onSubmit={handleSubmitIntegrante} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <form onSubmit={handleSubmitIntegrante} className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
                   <h3 className="text-lg font-medium text-black mb-4">
                     {editingIntegrante ? 'Editar Integrante' : 'Nuevo Integrante'}
                   </h3>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
                       <input
                         type="text"
                         value={integranteForm.nombre}
@@ -344,7 +448,7 @@ export default function ProviderDetailPage({
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Apellido *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Apellido *</label>
                       <input
                         type="text"
                         value={integranteForm.apellido}
@@ -354,7 +458,7 @@ export default function ProviderDetailPage({
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">DNI/CUIT/CUIL *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">DNI/CUIT/CUIL *</label>
                       <input
                         type="text"
                         value={integranteForm.documento}
@@ -364,7 +468,7 @@ export default function ProviderDetailPage({
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Nacimiento *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Nacimiento *</label>
                       <input
                         type="date"
                         value={integranteForm.fecha_nacimiento}
@@ -374,7 +478,7 @@ export default function ProviderDetailPage({
                       />
                     </div>
                   </div>
-                  <div className="mt-4 flex justify-end space-x-3">
+                  <div className="mt-6 flex justify-end space-x-3">
                     <button
                       type="button"
                       onClick={() => {
@@ -408,146 +512,63 @@ export default function ProviderDetailPage({
                   <p className="text-gray-600">Agrega el primer integrante para este proveedor</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {integrantes.map(integrante => (
-                    <div key={integrante.id} className="p-4 bg-white border border-gray-200 rounded-lg">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-black">{integrante.nombre} {integrante.apellido}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{integrante.documento}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(integrante.fecha_nacimiento).toLocaleDateString('es-AR')}
-                          </p>
+                    <div key={integrante.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="text-lg font-semibold text-black">{integrante.nombre} {integrante.apellido}</h3>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(integrante.status)}`}>
+                            {getStatusText(integrante.status)}
+                          </span>
                         </div>
                         <div className="relative">
-                          <button className="p-1 text-gray-400 hover:text-gray-600">
+                          <button
+                            onClick={() => toggleDropdown(`integrante-${integrante.id}`)}
+                            className="p-1 text-gray-400 hover:text-gray-600"
+                          >
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
                             </svg>
                           </button>
-                          <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 hidden">
+                          <div className={`absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 ${openDropdown === `integrante-${integrante.id}` ? 'block' : 'hidden'}`}>
                             <div className="py-1">
                               <button
-                                onClick={() => handleEditIntegrante(integrante)}
+                                onClick={() => {
+                                  handleEditIntegrante(integrante);
+                                  closeDropdowns();
+                                }}
                                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               >
-                                Editar
+                                Editar Integrante
                               </button>
                               <button
-                                onClick={() => handleDeleteIntegrante(integrante.id.toString())}
+                                onClick={() => {
+                                  handleDeleteIntegrante(integrante.id.toString());
+                                  closeDropdowns();
+                                }}
                                 className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                               >
-                                Eliminar
+                                Eliminar Integrante
                               </button>
                             </div>
                           </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-black">DNI/CUIT/CUIL:</span>
+                          <div className="text-gray-600">{integrante.documento}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-black">Fecha de Nacimiento:</span>
+                          <div className="text-gray-600">{new Date(integrante.fecha_nacimiento).toLocaleDateString('es-AR')}</div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Panel derecho */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Card del Proveedor */}
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-black mb-2">{provider.name}</h2>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(provider.status)}`}>
-                    {getStatusText(provider.status)}
-                  </span>
-                </div>
-                <div className="relative">
-                  <button className="p-1 text-gray-400 hover:text-gray-600">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
-                    </svg>
-                  </button>
-                  <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 hidden">
-                    <div className="py-1">
-                      <button
-                        onClick={() => setShowProviderForm(true)}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Editar Proveedor
-                      </button>
-                      <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                        Eliminar Proveedor
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {provider.description && (
-                <p className="text-gray-600 mb-6">{provider.description}</p>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Información de Contacto</h3>
-                  <div className="space-y-2">
-                    {provider.contact_name && (
-                      <div>
-                        <span className="text-sm text-gray-600">Contacto:</span>
-                        <p className="text-black font-medium">{provider.contact_name}</p>
-                      </div>
-                    )}
-                    {provider.email && (
-                      <div>
-                        <span className="text-sm text-gray-600">Email:</span>
-                        <p className="text-black font-medium">{provider.email}</p>
-                      </div>
-                    )}
-                    {provider.phone && (
-                      <div>
-                        <span className="text-sm text-gray-600">Teléfono:</span>
-                        <p className="text-black font-medium">{provider.phone}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Información del Evento</h3>
-                  <div className="space-y-2">
-                    <div>
-                      <span className="text-sm text-gray-600">Evento:</span>
-                      <p className="text-black font-medium">{event.title}</p>
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-600">Ubicación:</span>
-                      <p className="text-black font-medium">{event.location}</p>
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-600">Fecha:</span>
-                      <p className="text-black font-medium">
-                        {new Date(event.start_date).toLocaleDateString('es-AR')} - {new Date(event.end_date).toLocaleDateString('es-AR')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Módulo de Documentos Adjuntos (Demo) */}
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-black">Documentos Adjuntos</h2>
-                <button className="px-4 py-2 text-sm text-white bg-black rounded-md hover:bg-gray-800">
-                  + Subir Documento
-                </button>
-              </div>
-              
-              <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <div className="text-4xl mb-4">📄</div>
-                <h3 className="text-lg font-medium text-black mb-2">No hay documentos adjuntos</h3>
-                <p className="text-gray-600 mb-4">Arrastra y suelta archivos aquí o haz clic en "Subir Documento"</p>
-                <p className="text-xs text-gray-500">Módulo de demostración - Próximamente disponible</p>
-              </div>
             </div>
           </div>
         </div>

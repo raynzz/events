@@ -650,219 +650,32 @@ export default function TempEventDetailPage({ params }: { params: Promise<{ id: 
               <p className="text-gray-600">Agrega el primer proveedor para este evento</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {providers.map(provider => (
-                <div key={provider.id} className="p-6 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-black">{provider.name}</h3>
+                <Link
+                  key={provider.id}
+                  href={`/events/${id}/providers/${provider.id}`}
+                  className="block p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-md transition-all duration-200"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-black mb-1">{provider.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {provider.contact_name && `Contacto: ${provider.contact_name} • `}
+                        {provider.email && `Email: ${provider.email} • `}
+                        {provider.phone && `Tel: ${provider.phone}`}
+                      </p>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(provider.status)}`}>
                         {getStatusText(provider.status)}
                       </span>
                     </div>
-                    <div className="relative">
-                      <button className="p-1 text-gray-400 hover:text-gray-600">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
-                        </svg>
-                      </button>
-                      <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 hidden">
-                        <div className="py-1">
-                          <Link
-                            href={`/events/${id}/providers/${provider.id}`}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Ver Detalle
-                          </Link>
-                          <button
-                            onClick={() => handleEditProvider(provider)}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Editar Proveedor
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProvider(provider.id)}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                          >
-                            Eliminar Proveedor
-                          </button>
-                        </div>
-                      </div>
+                    <div className="ml-4">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
-                  {provider.description && <p className="text-gray-600 mb-4">{provider.description}</p>}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    {provider.contact_name && (
-                      <div>
-                        <span className="font-medium text-black">Contacto:</span>
-                        <div className="text-gray-600">{provider.contact_name}</div>
-                      </div>
-                    )}
-                    {provider.email && (
-                      <div>
-                        <span className="font-medium text-black">Email:</span>
-                        <div className="text-gray-600">{provider.email}</div>
-                      </div>
-                    )}
-                    {provider.phone && (
-                      <div>
-                        <span className="font-medium text-black">Teléfono:</span>
-                        <div className="text-gray-600">{provider.phone}</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Integrantes Section - Inside Provider */}
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-lg font-semibold text-black">Integrantes</h4>
-                      <button
-                        onClick={() => {
-                          setEditingIntegrante(null);
-                          setIntegranteForm({
-                            nombre: '',
-                            apellido: '',
-                            documento: '',
-                            fecha_nacimiento: '',
-                            proveedor: provider.id,
-                          });
-                          setShowIntegranteForm(!showIntegranteForm);
-                        }}
-                        className="px-3 py-1 text-sm text-white bg-black rounded-md hover:bg-gray-800"
-                      >
-                        {showIntegranteForm ? 'Cancelar' : '+ Agregar'}
-                      </button>
-                    </div>
-
-                    {/* Integrante Form */}
-                    {showIntegranteForm && (
-                      <form onSubmit={handleIntegranteSubmit} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <h5 className="text-md font-medium text-black mb-3">
-                          {editingIntegrante ? 'Editar Integrante' : 'Nuevo Integrante'}
-                        </h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Nombre *</label>
-                            <input
-                              type="text"
-                              value={integranteForm.nombre}
-                              onChange={e => setIntegranteForm({ ...integranteForm, nombre: e.target.value })}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Apellido *</label>
-                            <input
-                              type="text"
-                              value={integranteForm.apellido}
-                              onChange={e => setIntegranteForm({ ...integranteForm, apellido: e.target.value })}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">DNI/CUIT/CUIL *</label>
-                            <input
-                              type="text"
-                              value={integranteForm.documento}
-                              onChange={e => setIntegranteForm({ ...integranteForm, documento: e.target.value })}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Fecha Nacimiento *</label>
-                            <input
-                              type="date"
-                              value={integranteForm.fecha_nacimiento}
-                              onChange={e => setIntegranteForm({ ...integranteForm, fecha_nacimiento: e.target.value })}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black"
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-4 flex justify-end space-x-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowIntegranteForm(false);
-                              setEditingIntegrante(null);
-                              setIntegranteForm({
-                                nombre: '',
-                                apellido: '',
-                                documento: '',
-                                fecha_nacimiento: '',
-                                proveedor: '',
-                              });
-                            }}
-                            className="px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            type="submit"
-                            className="px-3 py-1 text-xs font-medium text-white bg-black rounded-md hover:bg-gray-800"
-                          >
-                            {editingIntegrante ? 'Actualizar' : 'Guardar'}
-                          </button>
-                        </div>
-                      </form>
-                    )}
-
-                    {/* Integrantes List */}
-                    <div className="space-y-3">
-                      {isLoadingIntegrantes ? (
-                        <div className="text-center py-4">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto"></div>
-                          <p className="mt-1 text-xs text-gray-600">Cargando integrantes...</p>
-                        </div>
-                      ) : integrantes.length === 0 ? (
-                        <div className="text-center py-6 bg-gray-50 rounded-lg">
-                          <div className="text-2xl mb-2">👤</div>
-                          <p className="text-xs text-gray-600">No hay integrantes en este proveedor</p>
-                        </div>
-                      ) : (
-                        integrantes
-                          .filter(integrante => integrante.proveedor === parseInt(provider.id))
-                          .map(integrante => (
-                            <div key={integrante.id} className="p-3 bg-white rounded border border-gray-200">
-                              <div className="flex justify-between items-start mb-2">
-                                <div>
-                                  <h6 className="font-medium text-sm text-black">{integrante.nombre} {integrante.apellido}</h6>
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(integrante.status)}`}>
-                                    {getStatusText(integrante.status)}
-                                  </span>
-                                </div>
-                                <div className="flex space-x-1">
-                                  <button
-                                    onClick={() => handleEditIntegrante(integrante)}
-                                    className="px-2 py-0.5 text-xs text-black bg-white border border-gray-300 rounded hover:bg-gray-50"
-                                  >
-                                    Editar
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteIntegrante(integrante.id.toString())}
-                                    className="px-2 py-0.5 text-xs text-white bg-red-600 rounded hover:bg-red-700"
-                                  >
-                                    Eliminar
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                                <div>
-                                  <span className="font-medium">Documento:</span> {integrante.documento}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Nacimiento:</span> {new Date(integrante.fecha_nacimiento).toLocaleDateString('es-AR')}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                      )}
-                    </div>
-                  </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
