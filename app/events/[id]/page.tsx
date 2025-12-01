@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { readItem, readEventProviders, createProvider, updateProvider, deleteProvider, Integrante } from '@/lib/directus';
+import { readEventProviders, createProvider, updateProvider, deleteProvider, Integrante } from '@/lib/directus';
+import EventStatusSelector from '@/components/EventStatusSelector';
 import { use } from 'react';
 
 interface Provider {
@@ -64,24 +65,85 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     proveedor: '',
   });
 
-  // Fetch event details
+  // Fetch event details - Migrated from temp-detail strategy
   useEffect(() => {
-    if (!id) return;
-    const fetchEvent = async () => {
+    if (!user?.id || !id) return;
+    
+    console.log('🔍 EventDetailPage - Starting to fetch event...');
+    console.log('🔍 User ID:', user.id);
+    console.log('🔍 Event ID from params:', id);
+    
+    const fetchEventFromList = async () => {
       try {
-        console.log('Fetching event with ID:', id);
-        const data = await readItem('eventos', id);
-        console.log('Event data received:', data);
-        setEvent(data);
+        console.log('🔍 Importing readUserEvents...');
+        const { readUserEvents } = await import('@/lib/directus');
+        
+        console.log('🔍 Fetching user events...');
+        const data = await readUserEvents(user.id);
+        console.log('🔥 User events data received:', data);
+        
+        if (data && data.length > 0) {
+          console.log('🔥 Searching for event with ID:', id);
+          console.log('🔥 ID type:', typeof id);
+          
+          // Mostrar todos los IDs disponibles para comparación
+          const availableIds = data.map((item: any) => ({
+            id: item.id,
+            type: typeof item.id,
+            stringId: String(item.id),
+            numberId: Number(item.id)
+          }));
+          console.log('🔥 Available event IDs:', availableIds);
+          
+          // Intentar encontrar el evento con diferentes comparaciones
+          let foundEvent = data.find((item: any) => {
+            console.log('🔍 Comparing:', item.id, 'with:', id);
+            console.log('🔍 Types:', typeof item.id, 'vs', typeof id);
+            console.log('🔍 Strict equality:', item.id === id);
+            console.log('🔍 String equality:', String(item.id) === String(id));
+            console.log('🔍 Number equality:', Number(item.id) === Number(id));
+            
+            return item.id === id ||
+                   String(item.id) === String(id) ||
+                   Number(item.id) === Number(id);
+          });
+          
+          console.log('🔥 Found event with first method:', !!foundEvent);
+          
+          if (!foundEvent) {
+            // Si no encuentra con el método anterior, intentar búsqueda manual
+            console.log('🔍 Trying manual search...');
+            for (let i = 0; i < data.length; i++) {
+              const item = data[i];
+              if (String(item.id) === String(id) || Number(item.id) === Number(id)) {
+                foundEvent = item;
+                console.log('🔍 Event found manually:', foundEvent);
+                break;
+              }
+            }
+          }
+          
+          if (foundEvent) {
+            console.log('✅ Event found:', foundEvent);
+            setEvent(foundEvent);
+            console.log('✅ Event set in state:', foundEvent);
+          } else {
+            console.log('❌ Event not found in user list with ID:', id);
+            console.log('❌ Tried all comparison methods');
+            setEvent(null);
+          }
+        } else {
+          console.log('❌ No events returned for user');
+          setEvent(null);
+        }
       } catch (error) {
-        console.error('Error fetching event:', error);
-        // Mostrar más detalles del error
-        console.error('Event ID:', id);
-        console.error('Full error:', error);
+        console.error('❌ Error fetching event from list:', error);
+        setEvent(null);
       }
     };
-    fetchEvent();
-  }, [id]);
+    
+    fetchEventFromList();
+  }, [user, id]);
 
   // Fetch providers for the event
   const fetchProviders = async () => {
@@ -103,9 +165,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   useEffect(() => {
-    fetchProviders();
-    fetchIntegrantes();
-  }, [id]);
+    if (event) {
+      fetchProviders();
+      fetchIntegrantes();
+    }
+  }, [event]);
 
   // Cargar integrantes para el evento
   const fetchIntegrantes = async () => {
@@ -374,9 +438,29 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
-                {getStatusText(event.status)}
-              </span>
+              <EventStatusSelector
+                eventId={event.id}
+                currentStatus={event.status}
+                onStatusChange={(newStatus) => {
+                  console.log(`Event ${event.id} status changed to ${newStatus}`);
+                }}
+                onRefresh={() => {
+                  // Recargar el evento desde la lista
+                  const fetchEventFromList = async () => {
+                    try {
+                      const { readUserEvents } = await import('@/lib/directus');
+                      const data = await readUserEvents(user!.id);
+                      const foundEvent = data.find((item: any) => item.id === id);
+                      if (foundEvent) {
+                        setEvent(foundEvent);
+                      }
+                    } catch (error) {
+                      console.error('Error refreshing event:', error);
+                    }
+                  };
+                  fetchEventFromList();
+                }}
+              />
             </div>
           </div>
         </div>
