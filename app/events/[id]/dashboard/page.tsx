@@ -327,7 +327,6 @@ export default function EventDashboardPage({ params }: { params: { id: string } 
               </div>
             </div>
           </div>
-        </div>
             </div>
           )}
 
