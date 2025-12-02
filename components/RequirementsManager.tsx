@@ -33,9 +33,9 @@ export default function RequirementsManager({ eventId, onUpdate }: RequirementsM
   const [selectedParticipant, setSelectedParticipant] = useState<ParticipantWithRequirements | null>(null);
   const [isCreatingRequirement, setIsCreatingRequirement] = useState(false);
   const [newRequirement, setNewRequirement] = useState({
-    nombre: '',
+    Nombre: '', // ← Campo correcto con mayúscula
     descripcion: '',
-    detalle_clausulas: '',
+    detalle: '', // ← Campo correcto
     suma_asegurada: '',
     es_global: false
   });

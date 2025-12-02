@@ -590,9 +590,9 @@ export interface EventoParticipante {
 // Tipo para eventos_requisitos (requisitos disponibles)
 export interface EventoRequisito {
   id: number;
-  nombre: string;
+  Nombre: string; // ← Campo correcto con mayúscula
   descripcion?: string;
-  detalle_clausulas?: string;
+  detalle?: string; // ← Campo correcto
   suma_asegurada?: number;
   es_global: boolean;
   evento_id?: number; // null para requisitos globales
@@ -877,45 +877,77 @@ export const getEventRequirements = async (eventId?: string | number) => {
 
 // Obtener solo requisitos globales
 export const getGlobalRequirements = async () => {
-  const response = await fetch(
-    `${directusUrl}/items/eventos_requisitos?filter[status][_eq]=active&filter[es_global][_eq]=true&sort=nombre`,
-    {
+  try {
+    console.log('🔍 Obteniendo requisitos globales...');
+    
+    // URL de la consulta
+    const queryUrl = `${directusUrl}/items/eventos_requisitos?filter[status][_eq]=active&filter[es_global][_eq]=true&sort=nombre&fields=*`;
+    console.log('📡 URL de consulta:', queryUrl);
+    
+    const response = await fetch(queryUrl, {
       headers: getHeaders(),
+    });
+
+    console.log('📨 Respuesta status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error en respuesta:', errorText);
+      throw new Error(`Failed to read global requirements: HTTP ${response.status} - ${errorText}`);
     }
-  );
 
-  if (!response.ok) {
-    throw new Error('Failed to read global requirements');
+    const data = await response.json();
+    console.log('✅ Datos de requisitos globales recibidos:', data);
+    console.log('📋 Total de requisitos globales encontrados:', data.data?.length || 0);
+    
+    return data.data || [];
+  } catch (error) {
+    console.error('💥 Error en getGlobalRequirements:', error);
+    // En lugar de lanzar error, devolver array vacío para no romper la UI
+    return [];
   }
-
-  const data = await response.json();
-  return data.data;
 };
 
 // Crear requisito global
 export const createGlobalRequirement = async (requirementData: {
-  nombre: string;
+  Nombre: string; // ← Campo correcto con mayúscula
   descripcion?: string;
-  detalle_clausulas?: string;
+  detalle?: string; // ← Campo correcto
   suma_asegurada?: number;
 }) => {
-  const response = await fetch(`${directusUrl}/items/eventos_requisitos`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify({
-      ...requirementData,
-      es_global: true,
-      evento_id: null,
-      status: 'active'
-    }),
-  });
+  try {
+    console.log('🔍 Creando requisito global:', requirementData);
+    
+    const response = await fetch(`${directusUrl}/items/eventos_requisitos`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        Nombre: requirementData.Nombre, // ← Campo correcto con mayúscula
+        descripcion: requirementData.descripcion,
+        detalle: requirementData.detalle, // ← Campo correcto
+        suma_asegurada: requirementData.suma_asegurada,
+        es_global: true,
+        evento_id: null,
+        status: 'active'
+      }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.errors?.[0]?.message || 'Failed to create global requirement');
+    console.log('📨 Respuesta status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error en respuesta:', errorText);
+      throw new Error(`Failed to create global requirement: HTTP ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Requisito global creado exitosamente:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('💥 Error en createGlobalRequirement:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 // Obtener requisitos asignados a un participante

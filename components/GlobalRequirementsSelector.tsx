@@ -30,9 +30,9 @@ export default function GlobalRequirementsSelector({
   const [dialogMessage, setDialogMessage] = useState('');
   
   const [newRequirement, setNewRequirement] = useState({
-    nombre: '',
+    Nombre: '', // ← Campo correcto con mayúscula
     descripcion: '',
-    detalle_clausulas: '',
+    detalle: '', // ← Campo correcto
     suma_asegurada: ''
   });
 
@@ -45,12 +45,21 @@ export default function GlobalRequirementsSelector({
   const fetchGlobalRequirements = async () => {
     setIsLoading(true);
     try {
+      console.log('🔍 Iniciando carga de requisitos globales...');
       const globalRequirements = await getGlobalRequirements();
+      console.log('📋 Requisitos globales obtenidos:', globalRequirements);
+      
       setRequirements(globalRequirements.map(req => ({ ...req, selected: false })));
       setSelectedRequirements([]);
+      
+      if (globalRequirements.length === 0) {
+        console.log('⚠️ No se encontraron requisitos globales en la base de datos');
+        setDialogMessage('No se encontraron requisitos globales. Puedes crear uno nuevo.');
+        setShowErrorDialog(true);
+      }
     } catch (error) {
-      console.error('Error fetching global requirements:', error);
-      setDialogMessage('Error al cargar requisitos globales');
+      console.error('❌ Error fetching global requirements:', error);
+      setDialogMessage(`Error al cargar requisitos globales: ${error instanceof Error ? error.message : 'Error desconocido'}`);
       setShowErrorDialog(true);
     } finally {
       setIsLoading(false);
@@ -70,7 +79,7 @@ export default function GlobalRequirementsSelector({
   const handleCreateRequirement = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newRequirement.nombre.trim()) {
+    if (!newRequirement.Nombre.trim()) { // ← Campo correcto con mayúscula
       setDialogMessage('El nombre del requisito es obligatorio');
       setShowErrorDialog(true);
       return;
@@ -80,9 +89,9 @@ export default function GlobalRequirementsSelector({
       setIsLoading(true);
       
       const createdRequirement = await createGlobalRequirement({
-        nombre: newRequirement.nombre,
+        Nombre: newRequirement.Nombre, // ← Campo correcto con mayúscula
         descripcion: newRequirement.descripcion || undefined,
-        detalle_clausulas: newRequirement.detalle_clausulas || undefined,
+        detalle: newRequirement.detalle || undefined, // ← Campo correcto
         suma_asegurada: newRequirement.suma_asegurada ? parseFloat(newRequirement.suma_asegurada) : undefined
       });
 
@@ -96,9 +105,9 @@ export default function GlobalRequirementsSelector({
 
       // Reset form
       setNewRequirement({
-        nombre: '',
+        Nombre: '', // ← Campo correcto con mayúscula
         descripcion: '',
-        detalle_clausulas: '',
+        detalle: '', // ← Campo correcto
         suma_asegurada: ''
       });
       setShowCreateForm(false);
@@ -198,8 +207,8 @@ export default function GlobalRequirementsSelector({
                     <input
                       type="text"
                       required
-                      value={newRequirement.nombre}
-                      onChange={(e) => setNewRequirement(prev => ({ ...prev, nombre: e.target.value }))}
+                      value={newRequirement.Nombre} // ← Campo correcto con mayúscula
+                      onChange={(e) => setNewRequirement(prev => ({ ...prev, Nombre: e.target.value }))} // ← Campo correcto
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Ej: Seguro de Responsabilidad Civil"
                     />
@@ -219,13 +228,13 @@ export default function GlobalRequirementsSelector({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Detalle de Cláusulas
+                      Detalle
                     </label>
                     <textarea
-                      value={newRequirement.detalle_clausulas}
-                      onChange={(e) => setNewRequirement(prev => ({ ...prev, detalle_clausulas: e.target.value }))}
+                      value={newRequirement.detalle} // ← Campo correcto
+                      onChange={(e) => setNewRequirement(prev => ({ ...prev, detalle: e.target.value }))} // ← Campo correcto
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-20"
-                      placeholder="Detalles específicos de las cláusulas"
+                      placeholder="Detalles específicos"
                     />
                   </div>
 
@@ -312,12 +321,12 @@ export default function GlobalRequirementsSelector({
                             />
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900">{req.nombre}</h4>
+                            <h4 className="font-semibold text-gray-900">{req.Nombre}</h4> {/* ← Campo correcto con mayúscula */}
                             {req.descripcion && (
                               <p className="text-sm text-gray-600 mt-1">{req.descripcion}</p>
                             )}
-                            {req.detalle_clausulas && (
-                              <p className="text-sm text-gray-500 mt-1 italic">{req.detalle_clausulas}</p>
+                            {req.detalle && ( /* ← Campo correcto */
+                              <p className="text-sm text-gray-500 mt-1 italic">{req.detalle}</p>
                             )}
                             {req.suma_asegurada && (
                               <p className="text-sm text-blue-600 mt-1 font-medium">
