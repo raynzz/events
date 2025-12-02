@@ -39,88 +39,40 @@ export default function EventDashboardPage({ params }: { params: { id: string } 
   const [providers, setProviders] = useState<Provider[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'providers' | 'requirements'>('overview');
 
-  // Load event data
+  // Load event data from Directus
   useEffect(() => {
-    const mockEvent: Event = {
-      id: params.id,
-      title: 'Feria gastronómica italiana',
-      description: 'El mejor evento de comida italiana en la ciudad con chefs internacionales y productos importados directamente de Italia.',
-      startDate: '2024-06-15T10:00:00',
-      endDate: '2024-06-17T22:00:00',
-      location: 'Usina del Arte, Buenos Aires',
-      capacity: 1200,
-      category: 'gastronomico',
-      requiresLiquorLicense: true,
-      status: 'published',
-      providers: [
-        {
-          id: 'provider-1',
-          name: 'Branca',
-          description: 'Proveedor principal de alimentos italianos',
-          requiresLiquorLicense: true,
-          requiredDocuments: [
-            { id: 'rc1', type: 'RC', name: 'Registro de Comercio', required: false, description: 'Registro legal del establecimiento' },
-            { id: 'ap1', type: 'AP', name: 'Autorización de Policía', required: false, description: 'Permiso de autoridades locales' },
-            { id: 'art1', type: 'ART', name: 'ART - Responsabilidad del Trabajo', required: false, description: 'Seguro de accidentes de trabajo' },
-          ],
-          teamMembers: [
-            {
-              id: 'member-1',
-              name: 'Ana Lucia',
-              role: 'Jefa de Cocina',
-              documentStatus: {
-                'rc1': 'verified',
-                'ap1': 'uploaded',
-                'art1': 'pending'
-              }
-            },
-            {
-              id: 'member-2',
-              name: 'Luis Pérez',
-              role: 'Sous Chef',
-              documentStatus: {
-                'rc1': 'verified',
-                'ap1': 'verified',
-                'art1': 'verified'
-              }
-            },
-            {
-              id: 'member-3',
-              name: 'Luciano Reyes',
-              role: 'Ayudante de Cocina',
-              documentStatus: {
-                'rc1': 'pending',
-                'ap1': 'pending',
-                'art1': 'pending'
-              }
-            },
-            {
-              id: 'member-4',
-              name: 'Maria Becerra',
-              role: 'Camarera',
-              documentStatus: {
-                'rc1': 'verified',
-                'ap1': 'uploaded',
-                'art1': 'verified'
-              }
-            }
-          ]
-        }
-      ],
-      createdAt: '2024-05-01T10:00:00',
-      updatedAt: '2024-05-10T14:30:00',
-    };
-
-    // Simulate loading
-    setTimeout(() => {
-      if (params.id === '1' || params.id === '2' || params.id === '3') {
-        setEvent(mockEvent);
-        setProviders(mockEvent.providers);
-      } else {
-        setEvent(null);
-      }
-    }, 500);
+    loadEventData();
   }, [params.id]);
+
+  const loadEventData = async () => {
+    try {
+      // For now, we'll use mock data but structure it to match the real API response
+      const mockEvent: Event = {
+        id: params.id,
+        title: 'Feria gastronómica italiana',
+        description: 'El mejor evento de comida italiana en la ciudad con chefs internacionales y productos importados directamente de Italia.',
+        startDate: '2024-06-15T10:00:00',
+        endDate: '2024-06-17T22:00:00',
+        location: 'Usina del Arte, Buenos Aires',
+        capacity: 1200,
+        category: 'gastronomico',
+        requiresLiquorLicense: true,
+        status: 'published',
+        providers: [],
+        createdAt: '2024-05-01T10:00:00',
+        updatedAt: '2024-05-10T14:30:00',
+      };
+
+      setEvent(mockEvent);
+      
+      // TODO: Replace with actual API call when event API is implemented
+      // const eventData = await getEvent(params.id);
+      
+    } catch (error) {
+      console.error('Error loading event data:', error);
+      setEvent(null);
+    }
+  };
 
   const handleProvidersChange = (updatedProviders: Provider[]) => {
     setProviders(updatedProviders);

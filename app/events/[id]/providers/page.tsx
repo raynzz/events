@@ -13,6 +13,7 @@ import {
   createItem,
   readEventProviders
 } from '@/lib/directus';
+import IntegratedProviderAssignment from '@/components/IntegratedProviderAssignment';
 
 interface ProviderWithStatus extends Proveedor {
   isAssigned?: boolean;
@@ -323,101 +324,64 @@ export default function EventProvidersPage({ params }: { params: { id: string } 
           </div>
         )}
 
-        {/* Providers List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-black">Proveedores Disponibles</h3>
+        {/* Integrated Provider Assignment Workflow */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-medium text-black mb-2">Asignar Proveedor al Evento</h3>
+            <p className="text-gray-600">
+              Selecciona un proveedor del catálogo o crea uno nuevo. Después podrás asignarle los requisitos específicos.
+            </p>
           </div>
+          
+          <IntegratedProviderAssignment 
+            eventId={params.id} 
+            onComplete={() => loadProviders()}
+          />
+        </div>
 
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Cargando proveedores...</p>
+        {/* Assigned Providers List */}
+        {eventParticipants.length > 0 && (
+          <div className="bg-white rounded-lg shadow mt-8">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-black">Proveedores Asignados</h3>
             </div>
-          ) : allProviders.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <div className="text-4xl mb-4">🏢</div>
-              <p>No hay proveedores en el catálogo</p>
-              <p className="text-sm">Crea el primer proveedor para comenzar</p>
-            </div>
-          ) : (
             <div className="divide-y divide-gray-200">
-              {allProviders.map((provider) => (
+              {allProviders.filter(p => p.isAssigned).map((provider) => (
                 <div key={provider.id} className="px-6 py-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <h4 className="text-lg font-medium text-black">{provider.nombre}</h4>
-                        {provider.isAssigned && (
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            provider.assignmentStatus === 'approved' 
-                              ? 'bg-green-100 text-green-800'
-                              : provider.assignmentStatus === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {getAssignmentButtonText(provider)}
-                          </span>
-                        )}
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          provider.assignmentStatus === 'approved' 
+                            ? 'bg-green-100 text-green-800'
+                            : provider.assignmentStatus === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {getAssignmentButtonText(provider)}
+                        </span>
                       </div>
                       
                       {provider.descripcion && (
                         <p className="text-gray-600 mt-1">{provider.descripcion}</p>
                       )}
-                      
-                      <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                        {provider.rubro && (
-                          <span className="flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                            {provider.rubro}
-                          </span>
-                        )}
-                        
-                        {provider.email && (
-                          <span className="flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                            {provider.email}
-                          </span>
-                        )}
-                        
-                        {provider.telefono && (
-                          <span className="flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                            {provider.telefono}
-                          </span>
-                        )}
-                      </div>
                     </div>
                     
-                    <div className="flex items-center space-x-3">
-                      {provider.contacto && (
-                        <span className="text-sm text-gray-500">
-                          Contacto: {provider.contacto}
-                        </span>
-                      )}
-                      
-                      {!provider.isAssigned && (
-                        <button
-                          onClick={() => handleAssignProvider(provider.id.toString())}
-                          disabled={isAssignmentDisabled(provider)}
-                          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isAssigning === provider.id.toString() ? 'Asignando...' : 'Asignar'}
-                        </button>
-                      )}
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        href={`/events/${params.id}/providers/${provider.participantes?.[0]?.id}`}
+                        className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200"
+                      >
+                        Ver Detalle
+                      </Link>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   );
