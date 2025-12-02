@@ -21,6 +21,8 @@ import {
   Evento
 } from '@/lib/directus';
 import EventStatusSelector from '@/components/EventStatusSelector';
+import ProviderSelectorModal from '@/components/ProviderSelectorModal';
+import RequirementSelectorModal from '@/components/RequirementSelectorModal';
 
 interface Provider {
   id: string;
@@ -57,6 +59,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [providers, setProviders] = useState<EventoParticipante[]>([]);
   const [isLoadingProviders, setIsLoadingProviders] = useState(false);
   const [showProviderForm, setShowProviderForm] = useState(false);
+  const [showProviderSelector, setShowProviderSelector] = useState(false);
+  const [showRequirementSelector, setShowRequirementSelector] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<EventoParticipante | null>(null);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -528,13 +533,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             <h2 className="text-2xl font-bold text-black">Proveedores del Evento</h2>
             <button
               onClick={() => {
-                setEditingProvider(null);
-                setFormData({ name: '', contact_name: '', email: '', phone: '', description: '' });
-                setShowProviderForm(!showProviderForm);
+                setShowProviderSelector(true);
               }}
               className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
             >
-              {showProviderForm ? 'Cancelar' : '+ Agregar Proveedor'}
+              + Asignar Proveedor
             </button>
           </div>
 
@@ -657,6 +660,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
         </div>
+
+        {/* Modal del Selector de Proveedores */}
+        <ProviderSelectorModal
+          isOpen={showProviderSelector}
+          onClose={() => setShowProviderSelector(false)}
+          eventId={id}
+          onProviderAssigned={() => {
+            // Recargar la lista de proveedores después de asignar
+            fetchProviders();
+          }}
+        />
       </main>
     </div>
   );
