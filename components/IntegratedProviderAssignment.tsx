@@ -17,6 +17,231 @@ import {
 } from '@/lib/directus';
 import RequirementAssignmentModal from '@/components/RequirementAssignmentModal';
 
+// Tipo para usuarios del Avatar Group
+interface User {
+  id: string | number;
+  image?: string;
+  name: string;
+}
+
+// Componente Avatar simulado siguiendo el patrón de HeroUI
+const Avatar = ({ src, alt, className = '', children }: {
+  src?: string;
+  alt?: string;
+  className?: string;
+  children?: any;
+}) => {
+  return (
+    <div className={`relative inline-flex items-center justify-center ${className}`}>
+      {src ? (
+        <img 
+          src={src} 
+          alt={alt || ''} 
+          className="w-full h-full object-cover rounded-full"
+        />
+      ) : (
+        <div className="w-full h-full bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-xs font-medium">
+          {children || '?'}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente AvatarGroup siguiendo el patrón de HeroUI
+const AvatarGroup = ({ users = [], maxDisplay = 3, className = '' }: {
+  users?: User[];
+  maxDisplay?: number;
+  className?: string;
+}) => {
+  const displayUsers = users.slice(0, maxDisplay);
+  const remainingCount = users.length - maxDisplay;
+
+  return (
+    <div className={`flex -space-x-2 ${className}`}>
+      {/* Mostrar usuarios visibles */}
+      {displayUsers.map((user) => (
+        <Avatar 
+          src={user.image} 
+          alt={user.name}
+          className="ring-2 ring-white w-8 h-8 md:w-10 md:h-10"
+        >
+          {user.name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()}
+        </Avatar>
+      ))}
+      
+      {/* Mostrar contador si hay más usuarios */}
+      {remainingCount > 0 && (
+        <Avatar className="ring-2 ring-white w-8 h-8 md:w-10 md:h-10 bg-gray-100">
+          <span className="text-xs font-medium text-gray-600">
+            +{remainingCount}
+          </span>
+        </Avatar>
+      )}
+      
+      {/* Si no hay usuarios, mostrar avatar con + */}
+      {users.length === 0 && (
+        <Avatar className="ring-2 ring-white w-8 h-8 md:w-10 md:h-10 bg-gray-100">
+          <span className="text-xs font-medium text-gray-600">+</span>
+        </Avatar>
+      )}
+    </div>
+  );
+};
+
+// Componente AlertDialog siguiendo el patrón de HeroUI
+interface AlertDialogProps {
+  children: React.ReactNode;
+}
+
+interface AlertDialogContainerProps {
+  children: React.ReactNode;
+}
+
+interface AlertDialogDialogProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+interface AlertDialogHeaderProps {
+  children: React.ReactNode;
+}
+
+interface AlertDialogHeadingProps {
+  children: React.ReactNode;
+}
+
+interface AlertDialogBodyProps {
+  children: React.ReactNode;
+}
+
+interface AlertDialogFooterProps {
+  children: React.ReactNode;
+}
+
+interface AlertDialogIconProps {
+  status?: 'danger' | 'warning' | 'info' | 'success';
+  children: React.ReactNode;
+}
+
+interface ButtonProps {
+  variant?: 'tertiary' | 'danger' | 'solid' | 'bordered' | 'light' | 'flat' | 'faded' | 'shadow' | 'ghost';
+  onPress?: () => void;
+  children: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+}
+
+// Componente AlertDialog principal
+const AlertDialog = ({ children }: AlertDialogProps) => {
+  return <div className="relative">{children}</div>;
+};
+
+// Componentes del AlertDialog siguiendo el patrón de HeroUI
+const AlertDialogContainer = ({ children }: AlertDialogContainerProps) => {
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">{children}</div>;
+};
+
+const AlertDialogDialog = ({ className = '', children }: AlertDialogDialogProps) => {
+  return (
+    <div className={`bg-white rounded-lg shadow-xl max-w-md w-full ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const AlertDialogHeader = ({ children }: AlertDialogHeaderProps) => {
+  return <div className="px-6 py-4 border-b border-gray-200">{children}</div>;
+};
+
+const AlertDialogHeading = ({ children }: AlertDialogHeadingProps) => {
+  return <h3 className="text-lg font-semibold text-gray-900">{children}</h3>;
+};
+
+const AlertDialogBody = ({ children }: AlertDialogBodyProps) => {
+  return <div className="px-6 py-4">{children}</div>;
+};
+
+const AlertDialogFooter = ({ children }: AlertDialogFooterProps) => {
+  return <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">{children}</div>;
+};
+
+const AlertDialogIcon = ({ status = 'info', children }: AlertDialogIconProps) => {
+  const statusColors = {
+    danger: 'text-red-500',
+    warning: 'text-yellow-500',
+    info: 'text-blue-500',
+    success: 'text-green-500'
+  };
+  
+  return <div className={`text-2xl ${statusColors[status]}`}>{children}</div>;
+};
+
+const Button = ({ variant = 'solid', onPress, children, className = '', disabled = false, type = 'button' }: ButtonProps) => {
+  const variantClasses = {
+    tertiary: 'bg-gray-200 text-gray-700 hover:bg-gray-300',
+    danger: 'bg-red-600 text-white hover:bg-red-700',
+    solid: 'bg-blue-600 text-white hover:bg-blue-700',
+    bordered: 'border border-blue-600 text-blue-600 hover:bg-blue-50',
+    light: 'bg-blue-50 text-blue-600 hover:bg-blue-100',
+    flat: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+    faded: 'bg-gray-50 text-gray-600 hover:bg-gray-100',
+    shadow: 'bg-white text-gray-900 shadow-md hover:shadow-lg',
+    ghost: 'text-gray-700 hover:bg-gray-100'
+  };
+
+  return (
+    <button
+      type={type}
+      onClick={onPress}
+      disabled={disabled}
+      className={`px-4 py-2 rounded-md font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+// Ejemplo de uso del AlertDialog
+const ExampleAlertDialog = () => {
+  return (
+    <AlertDialog>
+      <Button variant="danger">Delete Project</Button>
+      <AlertDialog.Container>
+        <AlertDialog.Dialog className="sm:max-w-[400px]">
+          {({close}) => (
+            <>
+              <AlertDialog.Header>
+                <AlertDialog.Icon status="danger" />
+                <AlertDialog.Heading>Delete project permanently?</AlertDialog.Heading>
+              </AlertDialog.Header>
+              <AlertDialog.Body>
+                <p>
+                  This will permanently delete <strong>My Awesome Project</strong> and all of its
+                  data. This action cannot be undone.
+                </p>
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button variant="tertiary" onPress={close}>
+                  Cancel
+                </Button>
+                <Button variant="danger" onPress={close}>
+                  Delete Project
+                </Button>
+              </AlertDialog.Footer>
+            </>
+          )}
+        </AlertDialog.Dialog>
+      </AlertDialog.Container>
+    </AlertDialog>
+  );
+};
+
 interface ProviderWithStatus extends Proveedor {
   isAssigned?: boolean;
   assignmentStatus?: 'pending' | 'approved' | 'rejected';
@@ -54,17 +279,22 @@ export default function IntegratedProviderAssignment({ eventId, onComplete }: In
 
   const loadProviders = async () => {
     setIsLoading(true);
+    console.log('🔍 Cargando proveedores para evento:', eventId);
+    
     try {
       const [providersData, participantsData] = await Promise.all([
-        getAllProviders().catch(() => []),
-        getEventParticipants(eventId).catch(() => [])
+        getAllProviders(),
+        getEventParticipants(eventId)
       ]);
 
-      setAllProviders(providersData);
-      setEventParticipants(participantsData);
+      console.log('📋 Proveedores cargados:', providersData?.length || 0);
+      console.log('👥 Participantes cargados:', participantsData?.length || 0);
 
-      const providersWithStatus = providersData.map((provider: Proveedor) => {
-        const participant = participantsData.find((p: EventoParticipante) => p.proveedor_id === provider.id);
+      setAllProviders(providersData || []);
+      setEventParticipants(participantsData || []);
+
+      const providersWithStatus = (providersData || []).map((provider: Proveedor) => {
+        const participant = (participantsData || []).find((p: EventoParticipante) => p.proveedor_id === provider.id);
         return {
           ...provider,
           isAssigned: !!participant,
@@ -74,8 +304,12 @@ export default function IntegratedProviderAssignment({ eventId, onComplete }: In
       });
 
       setAllProviders(providersWithStatus);
+      console.log('✅ Proveedores procesados:', providersWithStatus.length);
     } catch (error) {
-      console.error('Error loading providers:', error);
+      console.error('💥 Error loading providers:', error);
+      alert(`Error al cargar proveedores: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      setAllProviders([]);
+      setEventParticipants([]);
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +339,7 @@ export default function IntegratedProviderAssignment({ eventId, onComplete }: In
     }
   };
 
-  const handleCreateProvider = async (e: React.FormEvent) => {
+  const handleCreateProvider = async (e: any) => {
     e.preventDefault();
     
     if (!newProvider.nombre.trim()) {
@@ -187,6 +421,32 @@ export default function IntegratedProviderAssignment({ eventId, onComplete }: In
 
   const isAssignmentDisabled = (provider: ProviderWithStatus) => {
     return provider.isAssigned || isAssigning === provider.id.toString();
+  };
+
+  // Función para generar participantes de ejemplo para el Avatar Group
+  const getSampleParticipants = (providerId: string | number): User[] => {
+    // Datos de ejemplo para demostrar el Avatar Group
+    const sampleParticipants: { [key: string]: User[] } = {
+      '1': [
+        { id: 1, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/blue.jpg', name: 'Juan Pérez' },
+        { id: 2, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/green.jpg', name: 'María García' },
+        { id: 3, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/purple.jpg', name: 'Carlos López' },
+        { id: 4, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/orange.jpg', name: 'Ana Martínez' },
+        { id: 5, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/red.jpg', name: 'Luis Rodríguez' },
+      ],
+      '2': [
+        { id: 6, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/blue.jpg', name: 'Elena Sánchez' },
+        { id: 7, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/green.jpg', name: 'Roberto Silva' },
+        { id: 8, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/purple.jpg', name: 'Carmen Torres' },
+      ],
+      '3': [
+        { id: 9, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/orange.jpg', name: 'Pedro Morales' },
+        { id: 10, image: 'https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/red.jpg', name: 'Sofía Herrera' },
+      ],
+    };
+
+    // Si el proveedor no tiene participantes de ejemplo, retornar array vacío (mostrará +)
+    return sampleParticipants[providerId.toString()] || [];
   };
 
   const getStepIndicator = () => {
@@ -433,6 +693,18 @@ export default function IntegratedProviderAssignment({ eventId, onComplete }: In
                         {provider.email && <span>📧 {provider.email}</span>}
                         {provider.telefono && <span>📞 {provider.telefono}</span>}
                       </div>
+
+                      {/* Avatar Group de Participantes - HeroUI Style */}
+                      <div className="mt-3">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-600">Participantes:</span>
+                          <AvatarGroup 
+                            users={getSampleParticipants(provider.id)} 
+                            maxDisplay={3}
+                            className=""
+                          />
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="ml-4">
@@ -477,3 +749,19 @@ export default function IntegratedProviderAssignment({ eventId, onComplete }: In
     </div>
   );
 }
+
+export { 
+  Avatar, 
+  AvatarGroup, 
+  AlertDialog, 
+  AlertDialogContainer, 
+  AlertDialogDialog, 
+  AlertDialogHeader, 
+  AlertDialogHeading, 
+  AlertDialogBody, 
+  AlertDialogFooter, 
+  AlertDialogIcon, 
+  Button,
+  ExampleAlertDialog 
+};
+export type { User };

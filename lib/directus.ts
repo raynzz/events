@@ -875,6 +875,49 @@ export const getEventRequirements = async (eventId?: string | number) => {
   return data.data;
 };
 
+// Obtener solo requisitos globales
+export const getGlobalRequirements = async () => {
+  const response = await fetch(
+    `${directusUrl}/items/eventos_requisitos?filter[status][_eq]=active&filter[es_global][_eq]=true&sort=nombre`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to read global requirements');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Crear requisito global
+export const createGlobalRequirement = async (requirementData: {
+  nombre: string;
+  descripcion?: string;
+  detalle_clausulas?: string;
+  suma_asegurada?: number;
+}) => {
+  const response = await fetch(`${directusUrl}/items/eventos_requisitos`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      ...requirementData,
+      es_global: true,
+      evento_id: null,
+      status: 'active'
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to create global requirement');
+  }
+
+  return response.json();
+};
+
 // Obtener requisitos asignados a un participante
 export const getParticipantRequirements = async (participantId: string | number) => {
   const response = await fetch(
@@ -979,19 +1022,34 @@ export const updateRequirementDocument = async (
 
 // Obtener todos los proveedores (catálogo)
 export const getAllProviders = async () => {
-  const response = await fetch(
-    `${directusUrl}/items/proveedores?filter[status][_eq]=active&sort=nombre`,
-    {
-      headers: getHeaders(),
+  console.log('🔍 Cargando todos los proveedores...');
+  
+  try {
+    const response = await fetch(
+      `${directusUrl}/items/proveedores?filter[status][_eq]=active&sort=nombre`,
+      {
+        headers: getHeaders(),
+      }
+    );
+
+    console.log('📡 Respuesta de proveedores status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error en respuesta de proveedores:', errorText);
+      throw new Error(`Failed to read providers: HTTP ${response.status} - ${errorText}`);
     }
-  );
 
-  if (!response.ok) {
-    throw new Error('Failed to read providers');
+    const data = await response.json();
+    console.log('✅ Datos de proveedores recibidos:', data);
+    console.log('📋 Total de proveedores encontrados:', data.data?.length || 0);
+    
+    return data.data || [];
+  } catch (error) {
+    console.error('💥 Error en getAllProviders:', error);
+    // En lugar de lanzar error, devolver array vacío para no romper la UI
+    return [];
   }
-
-  const data = await response.json();
-  return data.data;
 };
 
 // Hook personalizado para manejar la autenticación

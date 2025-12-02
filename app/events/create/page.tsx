@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getEventRequirements } from '@/lib/directus';
 import RequirementSelectorModal from '@/components/RequirementSelectorModal';
+import GlobalRequirementsSelector from '@/components/GlobalRequirementsSelector';
+import HeroDialog from '@/components/ui/hero-dialog';
 
 interface EventData {
   title: string;
@@ -28,6 +30,10 @@ export default function CreateEventPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | number | null>(null);
   const [showRequirementsModal, setShowRequirementsModal] = useState(false);
+  const [showGlobalRequirementsSelector, setShowGlobalRequirementsSelector] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState('');
 
   const [formData, setFormData] = useState<EventData>({
     title: '',
@@ -45,7 +51,8 @@ export default function CreateEventPage() {
     if (activeStep === 1) {
       // Validate basic info before moving to preview
       if (!formData.title || !formData.description || !formData.startDate || !formData.endDate || !formData.location) {
-        alert('Por favor completa todos los campos requeridos');
+        setDialogMessage('Por favor completa todos los campos requeridos');
+        setShowErrorDialog(true);
         return;
       }
       setActiveStep(2);
@@ -61,8 +68,17 @@ export default function CreateEventPage() {
     }
   };
 
-  const handleRequirementsModalClose = () => {
-    setShowRequirementsModal(false);
+  const handleGlobalRequirementsSelected = (requirements: any[]) => {
+    // Close the global requirements selector
+    setShowGlobalRequirementsSelector(false);
+    
+    // Show success dialog with event completion
+    setDialogMessage(`¡Evento creado exitosamente! Se asignaron ${requirements.length} requisito(s) global(es).`);
+    setShowSuccessDialog(true);
+  };
+
+  const handleSuccessDialogClose = () => {
+    setShowSuccessDialog(false);
     // Redirect to event detail page
     if (createdEventId) {
       router.push(`/events/${createdEventId}/dashboard`);
@@ -71,8 +87,12 @@ export default function CreateEventPage() {
     }
   };
 
+  const handleRequirementsModalClose = () => {
+    setShowRequirementsModal(false);
+  };
+
   const handleRequirementsAssigned = () => {
-    // Requirements assigned successfully, close modal and redirect
+    // Requirements assigned successfully, close modal
     handleRequirementsModalClose();
   };
 
@@ -97,14 +117,12 @@ export default function CreateEventPage() {
       // Store the created event ID
       setCreatedEventId(result.id);
 
-      // Show success message
-      alert('¡Evento creado exitosamente!');
-
-      // Open requirements selector modal
-      setShowRequirementsModal(true);
+      // Open global requirements selector
+      setShowGlobalRequirementsSelector(true);
     } catch (error) {
       console.error('Error creating event:', error);
-      alert(`Error al crear el evento: ${error instanceof Error ? error.message : 'Por favor intenta nuevamente.'}`);
+      setDialogMessage(`Error al crear el evento: ${error instanceof Error ? error.message : 'Por favor intenta nuevamente.'}`);
+      setShowErrorDialog(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -325,10 +343,10 @@ export default function CreateEventPage() {
                 Volver
               </button>
               <button
-                onClick={() => setShowRequirementsModal(true)}
+                onClick={() => setShowGlobalRequirementsSelector(true)}
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                Seleccionar Requisitos Globales
+                Gestionar Requisitos Globales
               </button>
             </div>
           </div>
@@ -344,6 +362,34 @@ export default function CreateEventPage() {
           onRequirementsAssigned={handleRequirementsAssigned}
         />
       )}
+
+      {/* Global Requirements Selector */}
+      {createdEventId && (
+        <GlobalRequirementsSelector
+          isOpen={showGlobalRequirementsSelector}
+          onClose={() => setShowGlobalRequirementsSelector(false)}
+          eventId={createdEventId}
+          onRequirementsSelected={handleGlobalRequirementsSelected}
+        />
+      )}
+
+      {/* Success Dialog */}
+      <HeroDialog
+        isOpen={showSuccessDialog}
+        onClose={handleSuccessDialogClose}
+        title="¡Evento Creado!"
+        description={dialogMessage}
+        type="success"
+      />
+
+      {/* Error Dialog */}
+      <HeroDialog
+        isOpen={showErrorDialog}
+        onClose={() => setShowErrorDialog(false)}
+        title="Error"
+        description={dialogMessage}
+        type="error"
+      />
     </div>
   );
 }

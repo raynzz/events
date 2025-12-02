@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function HomePage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -50,27 +51,28 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-black overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-black dark:text-white overflow-hidden transition-colors duration-300">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">H</span>
+              <div className="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center transition-colors duration-300">
+                <span className="text-white dark:text-black font-bold text-sm">H</span>
               </div>
-              <h1 className="text-xl font-bold text-black">HOP Events</h1>
+              <h1 className="text-xl font-bold text-black dark:text-white transition-colors duration-300">HOP Events</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               <Link
                 href="/login"
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-100 rounded-lg transition-all duration-300"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-300"
               >
                 Iniciar Sesión
               </Link>
               <Link
                 href="/register"
-                className="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300"
+                className="px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-300"
               >
                 Registrarse
               </Link>
@@ -89,7 +91,7 @@ export default function HomePage() {
                 <br />
                 <span className="font-normal">eventos seguros</span>
               </h2>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed transition-colors duration-300">
                 Soluciones integrales para la gestión de pólizas de seguros, 
                 acreditaciones y cumplimiento normativo en eventos.
               </p>
@@ -98,7 +100,7 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   href="/demo"
-                  className="group relative px-8 py-4 text-lg font-semibold text-white bg-black rounded-xl hover:bg-gray-800 transition-all duration-300 transform hover:scale-105"
+                  className="group relative px-8 py-4 text-lg font-semibold text-white bg-black dark:bg-blue-600 rounded-xl hover:bg-gray-800 dark:hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
                 >
                   <span className="flex items-center space-x-2">
                     <span>Ver Demo</span>
@@ -110,7 +112,7 @@ export default function HomePage() {
                 
                 <Link
                   href="/dashboard"
-                  className="group relative px-8 py-4 text-lg font-semibold text-black bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-105"
+                  className="group relative px-8 py-4 text-lg font-semibold text-black dark:text-white bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 transform hover:scale-105"
                 >
                   <span className="flex items-center space-x-2">
                     <span>Ir al Dashboard</span>
@@ -123,13 +125,13 @@ export default function HomePage() {
             </div>
 
             {/* Empty container - removed fluid animation */}
-            <div className="h-96 bg-gray-50 rounded-2xl"></div>
+            <div className="h-96 bg-gray-50 dark:bg-gray-800 rounded-2xl transition-colors duration-300"></div>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
@@ -137,10 +139,10 @@ export default function HomePage() {
                 key={index}
                 className="text-center group"
               >
-                <div className="text-4xl md:text-5xl font-light mb-2 group-hover:scale-110 transition-transform duration-300">
+                <div className="text-4xl md:text-5xl font-light mb-2 group-hover:scale-110 transition-transform duration-300 text-gray-900 dark:text-white">
                   {stat.number}
                 </div>
-                <div className="text-gray-600 text-lg">
+                <div className="text-gray-600 dark:text-gray-400 text-lg transition-colors duration-300">
                   {stat.label}
                 </div>
               </div>
@@ -153,11 +155,11 @@ export default function HomePage() {
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h3 className="text-3xl font-light mb-4">
+            <h3 className="text-3xl font-light mb-4 text-gray-900 dark:text-white transition-colors duration-300">
               Características 
               <span className="font-normal">esenciales</span>
             </h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto transition-colors duration-300">
               Descubre la plataforma que transforma la gestión de seguridad y cumplimiento en eventos
             </p>
           </div>
@@ -167,15 +169,15 @@ export default function HomePage() {
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="group bg-white border border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition-all duration-300 hover:shadow-lg"
+                className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 hover:shadow-lg"
               >
-                <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 bg-black dark:bg-blue-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
                   {feature.icon}
                 </div>
-                <h4 className="text-lg font-medium mb-2">
+                <h4 className="text-lg font-medium mb-2 text-gray-900 dark:text-white transition-colors duration-300">
                   {feature.title}
                 </h4>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-colors duration-300">
                   {feature.description.split('. ')[0]}.
                 </p>
               </div>
@@ -185,9 +187,9 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 mt-20">
+      <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-20 transition-colors duration-300">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-600">
+          <div className="text-center text-gray-600 dark:text-gray-400 transition-colors duration-300">
             <p className="text-lg mb-2">HOP Events - Seguridad y cumplimiento para eventos extraordinarios</p>
             <p className="text-sm">&copy; 2024. Todos los derechos reservados.</p>
           </div>
