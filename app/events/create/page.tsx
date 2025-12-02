@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { getEventRequirements } from '@/lib/directus';
+import RequirementSelectorModal from '@/components/RequirementSelectorModal';
 
 interface EventData {
   title: string;
@@ -13,11 +15,19 @@ interface EventData {
   location: string;
 }
 
+interface GlobalRequirement {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+}
+
 export default function CreateEventPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdEventId, setCreatedEventId] = useState<string | number | null>(null);
+  const [showRequirementsModal, setShowRequirementsModal] = useState(false);
 
   const [formData, setFormData] = useState<EventData>({
     title: '',
@@ -39,6 +49,9 @@ export default function CreateEventPage() {
         return;
       }
       setActiveStep(2);
+    } else if (activeStep === 2) {
+      // Move to requirements step
+      setActiveStep(3);
     }
   };
 
@@ -46,6 +59,21 @@ export default function CreateEventPage() {
     if (activeStep > 1) {
       setActiveStep(activeStep - 1);
     }
+  };
+
+  const handleRequirementsModalClose = () => {
+    setShowRequirementsModal(false);
+    // Redirect to event detail page
+    if (createdEventId) {
+      router.push(`/events/${createdEventId}/dashboard`);
+    } else {
+      router.push('/events');
+    }
+  };
+
+  const handleRequirementsAssigned = () => {
+    // Requirements assigned successfully, close modal and redirect
+    handleRequirementsModalClose();
   };
 
   const handleSubmit = async () => {
@@ -66,11 +94,14 @@ export default function CreateEventPage() {
 
       const result = await createEvent(eventData);
 
+      // Store the created event ID
+      setCreatedEventId(result.id);
+
       // Show success message
       alert('¡Evento creado exitosamente!');
 
-      // Redirect to events list
-      router.push(`/events`);
+      // Open requirements selector modal
+      setShowRequirementsModal(true);
     } catch (error) {
       console.error('Error creating event:', error);
       alert(`Error al crear el evento: ${error instanceof Error ? error.message : 'Por favor intenta nuevamente.'}`);
@@ -93,6 +124,7 @@ export default function CreateEventPage() {
   const steps = [
     { id: 1, name: 'Información Básica' },
     { id: 2, name: 'Confirmar' },
+    { id: 3, name: 'Requisitos Globales' },
   ];
 
   return (
@@ -267,7 +299,51 @@ export default function CreateEventPage() {
             </div>
           </div>
         )}
+
+        {/* Step 3: Global Requirements */}
+        {activeStep === 3 && (
+          <div className="mt-8 bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold text-black mb-6">Requisitos Globales del Evento</h2>
+
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">
+                Ahora puede seleccionar los requisitos globales que aplicarán a este evento. 
+                Estos requisitos se aplicarán a todos los proveedores participantes.
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Puede modificar estos requisitos más adelante desde el panel de gestión del evento.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                onClick={handleBack}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black"
+              >
+                Volver
+              </button>
+              <button
+                onClick={() => setShowRequirementsModal(true)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Seleccionar Requisitos Globales
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Requirements Selector Modal */}
+      {createdEventId && (
+        <RequirementSelectorModal
+          isOpen={showRequirementsModal}
+          onClose={handleRequirementsModalClose}
+          participantId={createdEventId}
+          onRequirementsAssigned={handleRequirementsAssigned}
+        />
+      )}
     </div>
   );
 }
