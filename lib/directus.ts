@@ -528,21 +528,124 @@ export const deleteProvider = async (id: string) => {
 // INTEGRANTES MANAGEMENT
 // ============================================
 
-// Tipo para integrantes
+// ============================================
+// NUEVA ESTRUCTURA DE DATOS - MIGRACIÓN COMPLETA
+// ============================================
+// Tipo para eventos (actualizado para nueva estructura)
+export interface Evento {
+  id: number;
+  title: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  status: 'draft' | 'published' | 'cancelled' | 'completed';
+  date_created: string;
+  date_updated: string;
+  user_created: number;
+  user_updated: number;
+  
+  // Relaciones
+  participantes?: EventoParticipante[];
+  requisitos?: EventoRequisito[];
+}
+
+// Tipo para proveedores (catálogo general)
+export interface Proveedor {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  email?: string;
+  telefono?: string;
+  contacto?: string;
+  rubro?: string;
+  status: 'active' | 'inactive';
+  date_created: string;
+  date_updated: string;
+  user_created: number;
+  user_updated: number;
+}
+
+// Tipo para eventos_participantes (relación evento-proveedor)
+export interface EventoParticipante {
+  id: number;
+  evento_id: number;
+  proveedor_id: number;
+  status: 'pending' | 'approved' | 'rejected';
+  fecha_asignacion: string;
+  notas?: string;
+  hash_publico?: string; // Para enlace externo
+  date_created: string;
+  date_updated: string;
+  user_created: number;
+  user_updated: number;
+  
+  // Relaciones
+  evento?: Evento;
+  proveedor?: Proveedor;
+  integrantes?: Integrante[];
+  requisitos?: EventoRequisito[];
+}
+
+// Tipo para eventos_requisitos (requisitos disponibles)
+export interface EventoRequisito {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  detalle_clausulas?: string;
+  suma_asegurada?: number;
+  es_global: boolean;
+  evento_id?: number; // null para requisitos globales
+  status: 'active' | 'inactive';
+  date_created: string;
+  date_updated: string;
+  user_created: number;
+  user_updated: number;
+  
+  // Relaciones
+  evento?: Evento;
+  participantes?: EventoParticipante[];
+}
+
+// Tipo para participantes (integrantes del proveedor en el evento)
 export interface Integrante {
   id: number;
+  evento_participante_id: number; // Relación con eventos_participantes
   nombre: string;
   apellido: string;
   documento: string;
   fecha_nacimiento: string;
+  cargo?: string;
+  telefono?: string;
+  email?: string;
   status: 'active' | 'inactive';
   sort: number;
   date_created: string;
   date_updated: string;
   user_created: number;
   user_updated: number;
-  proveedor?: number;
-  evento?: number;
+  
+  // Relaciones
+  evento_participante?: EventoParticipante;
+}
+
+// Tipo para la tabla pivot participantes-requisitos
+export interface ParticipanteRequisito {
+  id: number;
+  evento_participante_id: number;
+  evento_requisito_id: number;
+  estado: 'pendiente' | 'aprobado' | 'rechazado';
+  fecha_vencimiento?: string;
+  documento_adjunto?: string;
+  notas_revision?: string;
+  date_created: string;
+  date_updated: string;
+  user_created: number;
+  user_updated: number;
+  
+  // Relaciones
+  evento_participante?: EventoParticipante;
+  evento_requisito?: EventoRequisito;
 }
 
 // Create a new integrante
@@ -673,6 +776,222 @@ export const deleteIntegrante = async (id: string) => {
   }
 
   return response.json();
+};
+
+// ============================================
+// FUNCIONES PARA NUEVA ESTRUCTURA DE DATOS
+// ============================================
+
+// Crear participante (instancia de proveedor en evento)
+export const createEventParticipant = async (participantData: {
+  evento_id: string | number;
+  proveedor_id: string | number;
+  status?: 'pending' | 'approved' | 'rejected';
+  notas?: string;
+}) => {
+  // Generar hash único para enlace público
+  const hash_publico = Math.random().toString(36).substring(2, 15) + 
+                      Math.random().toString(36).substring(2, 15);
+  
+  const response = await fetch(`${directusUrl}/items/eventos_participantes`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      ...participantData,
+      fecha_asignacion: new Date().toISOString(),
+      hash_publico,
+      status: participantData.status || 'pending'
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to create event participant');
+  }
+
+  return response.json();
+};
+
+// Obtener participantes de un evento
+export const getEventParticipants = async (eventId: string | number) => {
+  const response = await fetch(
+    `${directusUrl}/items/eventos_participantes?filter[evento_id][_eq]=${eventId}&sort=date_created&fields=*`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to read event participants');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Asignar requisitos a un participante
+export const assignRequirementsToParticipant = async (
+  participantId: string | number,
+  requirementIds: (string | number)[]
+) => {
+  const assignments = requirementIds.map(reqId => ({
+    evento_participante_id: participantId,
+    evento_requisito_id: reqId,
+    estado: 'pendiente'
+  }));
+
+  const response = await fetch(`${directusUrl}/items/participantes_requisitos`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(assignments),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to assign requirements');
+  }
+
+  return response.json();
+};
+
+// Obtener requisitos de un evento (globales + específicos)
+export const getEventRequirements = async (eventId?: string | number) => {
+  let url = `${directusUrl}/items/eventos_requisitos?filter[status][_eq]=active&sort=es_global,nombre`;
+  
+  if (eventId) {
+    // Obtener requisitos globales + específicos del evento
+    url += `&filter[evento_id][_in]=${eventId},`;
+  }
+
+  const response = await fetch(url, {
+    headers: getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to read event requirements');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Obtener requisitos asignados a un participante
+export const getParticipantRequirements = async (participantId: string | number) => {
+  const response = await fetch(
+    `${directusUrl}/items/participantes_requisitos?filter[evento_participante_id][_eq]=${participantId}&fields=*`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to read participant requirements');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Crear integrante para un participante
+export const createParticipantIntegrante = async (integranteData: {
+  evento_participante_id: string | number;
+  nombre: string;
+  apellido: string;
+  documento: string;
+  fecha_nacimiento: string;
+  cargo?: string;
+  telefono?: string;
+  email?: string;
+}) => {
+  const response = await fetch(`${directusUrl}/items/integrantes`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      ...integranteData,
+      status: 'active'
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to create integrante');
+  }
+
+  return response.json();
+};
+
+// Obtener integrantes de un participante
+export const getParticipantIntegrantes = async (participantId: string | number) => {
+  const response = await fetch(
+    `${directusUrl}/items/integrantes?filter[evento_participante_id][_eq]=${participantId}&sort=sort,nombre,apellido`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to read participant integrantes');
+  }
+
+  const data = await response.json();
+  return data.data;
+};
+
+// Buscar participante por hash público
+export const getParticipantByHash = async (hash: string) => {
+  const response = await fetch(
+    `${directusUrl}/items/eventos_participantes?filter[hash_publico][_eq]=${hash}&fields=*`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Participant not found');
+  }
+
+  const data = await response.json();
+  return data.data?.[0] || null;
+};
+
+// Actualizar estado de documento de requisito
+export const updateRequirementDocument = async (
+  participantRequirementId: string | number,
+  documentData: {
+    estado: 'pendiente' | 'aprobado' | 'rechazado';
+    documento_adjunto?: string;
+    notas_revision?: string;
+  }
+) => {
+  const response = await fetch(`${directusUrl}/items/participantes_requisitos/${participantRequirementId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(documentData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.errors?.[0]?.message || 'Failed to update requirement document');
+  }
+
+  return response.json();
+};
+
+// Obtener todos los proveedores (catálogo)
+export const getAllProviders = async () => {
+  const response = await fetch(
+    `${directusUrl}/items/proveedores?filter[status][_eq]=active&sort=nombre`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to read providers');
+  }
+
+  const data = await response.json();
+  return data.data;
 };
 
 // Hook personalizado para manejar la autenticación

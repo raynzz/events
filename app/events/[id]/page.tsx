@@ -1,12 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { readEventProviders, createProvider, updateProvider, deleteProvider, Integrante } from '@/lib/directus';
+import { 
+  getEventParticipants, 
+  getAllProviders,
+  createEventParticipant,
+  getEventRequirements,
+  getParticipantRequirements,
+  createParticipantIntegrante,
+  getParticipantIntegrantes,
+  EventoParticipante,
+  EventoRequisito,
+  ParticipanteRequisito,
+  Proveedor,
+  Integrante,
+  Evento
+} from '@/lib/directus';
 import EventStatusSelector from '@/components/EventStatusSelector';
-import { use } from 'react';
 
 interface Provider {
   id: string;
@@ -40,7 +54,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   console.log('EventDetailPage - ID type:', typeof id);
 
   const [event, setEvent] = useState<Event | null>(null);
-  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providers, setProviders] = useState<EventoParticipante[]>([]);
   const [isLoadingProviders, setIsLoadingProviders] = useState(false);
   const [showProviderForm, setShowProviderForm] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
@@ -62,7 +76,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     apellido: '',
     documento: '',
     fecha_nacimiento: '',
-    proveedor: '',
+    evento_participante_id: '', // Nuevo campo para la nueva estructura
   });
 
   // Fetch event details - Migrated from temp-detail strategy
@@ -151,7 +165,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     setIsLoadingProviders(true);
     try {
       console.log('Fetching providers for event ID:', id);
-      const data = await readEventProviders(id);
+      const data = await getEventParticipants(id);
       console.log('Providers data received:', data);
       setProviders(data || []);
     } catch (error) {
@@ -177,21 +191,30 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     setIsLoadingIntegrantes(true);
     try {
       console.log('🔥 Fetching integrantes for event ID:', id);
-      const { readIntegrantes } = await import('@/lib/directus');
       
-      // Obtener todos los integrantes del evento
-      const data = await readIntegrantes({
-        filter: {
-          evento: {
-            _eq: id
+      // Primero obtener los participantes del evento
+      const participants = await getEventParticipants(id);
+      console.log('🔥 Participants found:', participants?.length || 0);
+      
+      if (!participants || participants.length === 0) {
+        setIntegrantes([]);
+        return;
+      }
+      
+      // Luego obtener integrantes de cada participante
+      const allIntegrantes: Integrante[] = [];
+      for (const participant of participants) {
+        if (participant.id) {
+          const participantIntegrantes = await getParticipantIntegrantes(participant.id);
+          console.log('🔥 Integrantes for participant', participant.id, ':', participantIntegrantes?.length || 0);
+          if (participantIntegrantes) {
+            allIntegrantes.push(...participantIntegrantes);
           }
-        },
-        sort: 'sort,nombre,apellido'
-      });
+        }
+      }
       
-      console.log('🔥 Integrantes data received:', data);
-      setIntegrantes(data || []);
-      console.log('✅ Integrantes set in state:', data?.length || 0, 'integrantes');
+      console.log('🔥 Total integrantes found:', allIntegrantes.length);
+      setIntegrantes(allIntegrantes);
     } catch (error) {
       console.error('❌ Error fetching integrantes:', error);
       setIntegrantes([]);
@@ -204,16 +227,17 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     e.preventDefault();
     try {
       if (editingProvider) {
-        await updateProvider(editingProvider.id, formData);
-        alert('Proveedor actualizado exitosamente');
+        // Actualizar participante existente (solo notas por ahora)
+        // TODO: Implementar updateParticipant cuando esté disponible
+        alert('Funcionalidad de actualización en desarrollo');
       } else {
-        await createProvider({ ...formData, evento: id, status: 'draft' });
-        alert('Proveedor creado exitosamente');
+        // Para la nueva estructura, necesitamos primero seleccionar un proveedor del catálogo
+        // y luego crear la relación evento-participante
+        alert('Para la nueva estructura, selecciona un proveedor del catálogo disponible');
+        setShowProviderForm(false);
+        setFormData({ name: '', contact_name: '', email: '', phone: '', description: '' });
+        fetchProviders();
       }
-      setFormData({ name: '', contact_name: '', email: '', phone: '', description: '' });
-      setShowProviderForm(false);
-      setEditingProvider(null);
-      fetchProviders();
     } catch (error) {
       console.error('Error saving provider:', error);
       alert('Error al guardar el proveedor');
@@ -233,10 +257,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleDeleteProvider = async (providerId: string) => {
-    if (!confirm('¿Estás seguro de eliminar este proveedor?')) return;
+    if (!confirm('¿Estás seguro de eliminar este participante del evento?')) return;
     try {
-      await deleteProvider(providerId);
-      alert('Proveedor eliminado exitosamente');
+      // TODO: Implementar eliminación de participante cuando esté disponible la función
+      alert('Funcionalidad de eliminación en desarrollo');
       fetchProviders();
     } catch (error) {
       console.error('Error deleting provider:', error);
@@ -273,17 +297,21 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         alert('Integrante actualizado exitosamente');
       } else {
         // Crear nuevo integrante - actualización optimista
-        console.log('🔥 Creating integrante for provider:', integranteForm.proveedor);
+        console.log('🔥 Creating integrante for participant:', integranteForm.evento_participante_id);
+        
+        if (!integranteForm.evento_participante_id) {
+          alert('Debe seleccionar un participante del evento');
+          return;
+        }
         
         // Crear objeto optimista para mostrar inmediatamente
         const newIntegranteOptimista: Integrante = {
           id: Date.now(), // ID temporal para el optimista
+          evento_participante_id: parseInt(integranteForm.evento_participante_id),
           nombre: integranteForm.nombre,
           apellido: integranteForm.apellido,
           documento: integranteForm.documento,
           fecha_nacimiento: integranteForm.fecha_nacimiento,
-          proveedor: parseInt(integranteForm.proveedor),
-          evento: parseInt(id),
           status: 'active',
           sort: 0,
           date_created: new Date().toISOString(),
@@ -295,10 +323,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         // Agregar a la lista inmediatamente (optimista)
         setIntegrantes(prev => [...prev, newIntegranteOptimista]);
         
-        const newIntegrante = await createIntegrante({
-          ...integranteForm,
-          evento: id,
-          status: 'active'
+        const newIntegrante = await createParticipantIntegrante({
+          evento_participante_id: parseInt(integranteForm.evento_participante_id),
+          nombre: integranteForm.nombre,
+          apellido: integranteForm.apellido,
+          documento: integranteForm.documento,
+          fecha_nacimiento: integranteForm.fecha_nacimiento
         });
         console.log('✅ Integrante created successfully:', newIntegrante);
         
@@ -320,7 +350,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         apellido: '',
         documento: '',
         fecha_nacimiento: '',
-        proveedor: '',
+        evento_participante_id: '',
       });
       setShowIntegranteForm(false);
       setEditingIntegrante(null);
@@ -343,7 +373,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       apellido: integrante.apellido,
       documento: integrante.documento,
       fecha_nacimiento: integrante.fecha_nacimiento.split('T')[0], // Convertir a formato YYYY-MM-DD
-      proveedor: integrante.proveedor?.toString() || '',
+      evento_participante_id: integrante.evento_participante_id?.toString() || '',
     });
     setShowIntegranteForm(true);
   };
