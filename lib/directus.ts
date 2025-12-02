@@ -15,14 +15,14 @@ export interface User {
 }
 
 // Configuración de Directus (DIRECTUS_URL puede usarse para peticiones públicas/anónimas)
-const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || process.env.DIRECTUS_URL || 'https://rayner-seguros.6vlrrp.easypanel.host';
-const directusToken = process.env.DIRECTUS_TOKEN || '0bGJAHZnl24NIQ4l8v_BUcFXhBKAikwu'; // Token estático de Super Admin/API
+const directusUrl = 'https://rayner-seguros.6vlrrp.easypanel.host';
+const directusToken = '0bGJAHZnl24NIQ4l8v_BUcFXhBKAikwu';
 
 /**
  * Función para obtener los headers de autorización.
  * Prioriza el token dinámico del usuario (de localStorage) para peticiones de sesión.
  */
-const getHeaders = (useUserToken = true) => {
+const getHeaders = (useUserToken = true, fallbackToStatic = true) => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -36,8 +36,8 @@ const getHeaders = (useUserToken = true) => {
     }
   }
 
-  // 2. Si no hay token de usuario dinámico, usar el token estático (solo para ADMIN/API)
-  if (directusToken) {
+  // 2. Si no hay token de usuario dinámico y se permite fallback, usar el token estático
+  if (fallbackToStatic && directusToken) {
     headers['Authorization'] = `Bearer ${directusToken}`;
   }
 
@@ -336,7 +336,7 @@ export function getAssetUrl(fileId: string | null | undefined): string | null {
   if (fileId.startsWith('http')) return fileId;
 
   // Construir la URL del asset
-  const baseUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || process.env.DIRECTUS_URL || directusUrl;
+  const baseUrl = directusUrl;
   return `${baseUrl}/assets/${fileId}`;
 }
 

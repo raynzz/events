@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import ProviderManager from '@/components/ProviderManager';
+import RequirementsDashboard from '@/components/RequirementsDashboard';
 
 interface Provider {
   id: string;
@@ -36,6 +37,7 @@ export default function EventDashboardPage({ params }: { params: { id: string } 
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'providers' | 'requirements'>('overview');
 
   // Load event data
   useEffect(() => {
@@ -284,8 +286,33 @@ export default function EventDashboardPage({ params }: { params: { id: string } 
             </div>
           </div>
 
-          {/* Progress Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 mb-6 border-b">
+            {[
+              { key: 'overview', label: 'Resumen', icon: '📊' },
+              { key: 'providers', label: 'Proveedores', icon: '👥' },
+              { key: 'requirements', label: 'Requisitos', icon: '📋' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as any)}
+                className={`px-4 py-2 text-sm font-medium rounded-t-md border-b-2 transition-colors ${
+                  activeTab === tab.key
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <span className="mr-2">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'overview' && (
+            <div>
+              {/* Progress Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -349,12 +376,43 @@ export default function EventDashboardPage({ params }: { params: { id: string } 
             </div>
           </div>
         </div>
+            </div>
+          )}
 
-        {/* Provider Management */}
-        <ProviderManager
-          providers={providers}
-          onProvidersChange={handleProvidersChange}
-        />
+          {activeTab === 'providers' && (
+            <div>
+              {/* Provider Management */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-medium text-black">Gestión de Proveedores</h3>
+                  <Link
+                    href={`/events/${params.id}/providers`}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  >
+                    → Gestionar Proveedores
+                  </Link>
+                </div>
+                
+                <div className="text-center py-8 text-gray-500">
+                  <div className="text-4xl mb-4">🏢</div>
+                  <p>Accede a la página completa de gestión de proveedores</p>
+                  <p className="text-sm">Podrás crear nuevos proveedores y asignarlos al evento</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'requirements' && (
+            <div>
+              {/* Requirements Management */}
+              <RequirementsDashboard
+                eventId={params.id}
+                participants={event?.providers}
+                onUpdate={() => window.location.reload()}
+              />
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
